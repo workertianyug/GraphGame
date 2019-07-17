@@ -1,0 +1,24 @@
+next meeting Tuesday 3pm
+
+todo:
+1. literature review
+    find an embeding that is suitable for graph actions
+
+2. defender start patrol
+   attacker start random time (testing)
+
+3. types of attacker:
+    random
+    trained with graph neural net
+    knows defender policy
+    wants to hurt (worst case)
+
+4. drone on different graph
+    can we learn this?
+
+5. get experimental results
+    testing is important
+
+
+
+
