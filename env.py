@@ -3,14 +3,14 @@ import numpy as np
 
 
 """ return a default graph for use """
-""" [isDef, isAtt, isUAV, reward, penetration time] """
+""" [isDef, isAtt, numUav, reward, penetration time] """
 def getDefaultGraph0():
 
 	g0 = nx.DiGraph()
-	g0.add_node(0, isDef=0, isAtt=0, isUAV=0, r=1, d=1, ctr=0)
-	g0.add_node(1, isDef=0, isAtt=0, isUAV=0, r=0, d=0, ctr=0)
-	g0.add_node(2, isDef=0, isAtt=0, isUAV=0, r=2, d=2, ctr=0)
-	g0.add_node(3, isDef=0, isAtt=0, isUAV=0, r=1, d=2, ctr=0)
+	g0.add_node(0, isDef=0, isAtt=0, numUav=0, r=1, d=1, ctr=0)
+	g0.add_node(1, isDef=0, isAtt=0, numUav=0, r=0, d=0, ctr=0)
+	g0.add_node(2, isDef=0, isAtt=0, numUav=0, r=2, d=2, ctr=0)
+	g0.add_node(3, isDef=0, isAtt=0, numUav=0, r=1, d=2, ctr=0)
 
 	g0.add_edge(0,0)
 	g0.add_edge(1,1)
@@ -37,14 +37,17 @@ def getDefaultGraph0():
 
 class Env(object):
 	
-	def __init__(self, gfn):
+	def __init__(self, gfn, numUav):
 		self.gfn = gfn
 		self.g = gfn()
 		self.end = False
 		self.t = 0
 		self.defNode = -1
 		self.attNode = -1
+		self.numUav = numUav
+		self.uavNodes = [-1 for i in range(numUav)]
 		
+
 	
 	def resetGame(self):
 		self.end = False
@@ -56,12 +59,16 @@ class Env(object):
 		self.defNode = 0
 		self.g.nodes[2]["isAtt"] = 1
 		self.attNode = 2
+		self.g.nodes[0]["numUav"] = self.numUav
+		self.uavNodes=[0 for i in range(self.numUav)]
 
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
 		             "attState": self._parseStateAtt(), "attR":0,
 		             "attNode": self.attNode,
-		             "end":self.end}
+		             "end":self.end,
+		             "uavState":self._parseStateUav(), "uavRs":[0 for i in range(self.numUav)],
+		             "uavNodes":self.uavNodes}
 
 		return stateDict
 
@@ -99,11 +106,27 @@ class Env(object):
 
 		return 42
 
+	def _uavMoves(self, edges):
+
+		for i in range(0,len(edges)):
+			edge = edges[i]
+			if (not self.g.has_edge(*edge)):
+				raise ValueError('edge move has to exist in graph')
+			if (self.g.nodes[edge[0]]["numUav"] == 0):
+				raise ValueError("move has to start from current location")
+
+			self.g.nodes[edge[0]]["numUav"] = self.g.nodes[edge[0]]["numUav"] - 1
+			self.g.nodes[edge[1]]["numUav"] = self.g.nodes[edge[1]]["numUav"] + 1
+
+			self.uavNodes[i] = edge[1]
+
+		return 42
+
 	""" 
 	return the state that defender can see 
 	isDef
 	isAtt: only when UAV has found the attacker (how to discount this?)
-	isUAV:
+	numUav:
 	r
 	d
 	"""
@@ -111,14 +134,14 @@ class Env(object):
 
 		gDef = self.g.copy()
 		for i in gDef.nodes:
-			if gDef.nodes[i]["isAtt"] == 1 and gDef.nodes[i]["isUAV"] == 0:
+			if gDef.nodes[i]["isAtt"] == 1 and gDef.nodes[i]["numUav"] == 0:
 				gDef.nodes[i]["isAtt"] = 0
 		return gDef
 
 	""" 
 	return the state that attacker can see 
 	isAtt:
-	isUAV: only when the attacker has encountered the UAV
+	numUav: only when the attacker has encountered the UAV
 	r
 	d
 	ctr
@@ -128,15 +151,24 @@ class Env(object):
 		gAtt = self.g.copy()
 		for i in gAtt.nodes:
 			del gAtt.nodes[i]["isDef"]
-			if gAtt.nodes[i]["isUAV"] == 1 and gAtt.nodes[i]["isAtt"] == 0:
-				gAtt.nodes[i]["isUAV"] = 0
+			if gAtt.nodes[i]["numUav"] == 1 and gAtt.nodes[i]["isAtt"] == 0:
+				gAtt.nodes[i]["numUav"] = 0
 		return gAtt
 
+	def _parseStateUav(self):
 
-	def step(self, defAct, attAct):
+		gUav = self.g.copy()
+		for i in gUav.nodes:
+			if gUav.nodes[i]["isAtt"] == 1 and gUav.nodes[i]["numUav"] == 0:
+				gUav.nodes[i]["isAtt"] = 0
+		return gUav
+
+
+	def step(self, defAct, attAct, uavActs):
 		
 		self._defMove(defAct)
 		self._attMove(attAct)
+		self._uavMoves(uavActs)
 
 		self.t += 1
 
@@ -164,7 +196,9 @@ class Env(object):
 					 "defNode": self.defNode,
 		             "attState": self._parseStateAtt(), "attR":attR,
 		             "attNode": self.attNode,
-		             "end":self.end}
+		             "end":self.end,
+		             "uavState": self._parseStateUav(), "uavR":[0 for i in range(0,self.numUav)],
+		             "uavNodes": self.uavNodes}
 		return stateDict
 
 

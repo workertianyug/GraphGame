@@ -44,5 +44,5 @@ def update(num):
     ax.set_yticks([])
 
 
-ani = matplotlib.animation.FuncAnimation(fig, update, frames=6, interval=1000, repeat=True)
+ani = matplotlib.animation.FuncAnimation(fig, update, frames=6, interval=1000, repeat=False)
 plt.show()
