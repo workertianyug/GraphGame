@@ -7,7 +7,7 @@ class RandDef(object):
 	
 	def __init__(self):
 
-		self.seed = 1
+		self.seed = 3
 		self.rand = np.random.RandomState(seed=self.seed)
 
 

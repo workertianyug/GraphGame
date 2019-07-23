@@ -7,7 +7,7 @@ class RandAtt(object):
 	
 	def __init__(self):
 
-		self.seed = 5
+		self.seed = 17
 		self.rand = np.random.RandomState(seed=self.seed)
 		self.lastAction = None
 
@@ -27,7 +27,8 @@ class RandAtt(object):
 
 		""" if decides to attack, then finish the attack """
 		if ((self.lastAction != None) 
-			and (self.lastAction[0] == self.lastAction[1])):
+			and (self.lastAction[0] == self.lastAction[1]) 
+			and (attState.nodes[attNode]["r"]>0)):
 		
 			return self.lastAction
 

@@ -1,16 +1,16 @@
 import networkx as nx
 import numpy as np
-
+import random
 
 """ return a default graph for use """
 """ [isDef, isAtt, numUav, reward, penetration time] """
 def getDefaultGraph0():
 
 	g0 = nx.DiGraph()
-	g0.add_node(0, isDef=0, isAtt=0, numUav=0, r=1, d=1, ctr=0)
-	g0.add_node(1, isDef=0, isAtt=0, numUav=0, r=0, d=0, ctr=0)
-	g0.add_node(2, isDef=0, isAtt=0, numUav=0, r=2, d=2, ctr=0)
-	g0.add_node(3, isDef=0, isAtt=0, numUav=0, r=1, d=2, ctr=0)
+	g0.add_node(0, isDef=0, isAtt=0, numUav=0, r=1.0, d=1, ctr=0)
+	g0.add_node(1, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+	g0.add_node(2, isDef=0, isAtt=0, numUav=0, r=2.0, d=2, ctr=0)
+	g0.add_node(3, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
 
 	g0.add_edge(0,0)
 	g0.add_edge(1,1)
@@ -28,12 +28,39 @@ def getDefaultGraph0():
 	g0.add_edge(0,2)
 	g0.add_edge(2,0)
 
-	g0.graph["utilDefC"] = 1
-	g0.graph["utilAttC"] = -1
+	g0.graph["utilDefC"] = 1.0
+	g0.graph["utilAttC"] = -1.0
 
 	return g0
 
+def getDefaultGraph5x5():
+	g = nx.DiGraph()
 
+	for i in range(0,25):
+		if i == 12:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=3.0, d=3, ctr=0)
+		elif i in [6,7,8,11,13,16,17,18]:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i,i)
+
+	for i in range(0,24):
+		if i in [4,9,14,19,24]:
+			continue
+		g.add_edge(i,i+1)
+		g.add_edge(i+1,i)
+
+	for i in range(0,4):
+		for j in range(0,5):
+			g.add_edge(i*5 + j, i*5+5 + j)
+			g.add_edge(i*5+5 + j, i*5 + j)			
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	return g
 
 class Env(object):
 	
@@ -53,15 +80,17 @@ class Env(object):
 		self.end = False
 		self.g = self.gfn()
 		self.t = 0
-		self.maxT = 10
+		self.maxT = 100
 		# initial locations will be randomized in the future
-		self.g.nodes[0]["isDef"] = 1
-		self.defNode = 0
-		self.g.nodes[2]["isAtt"] = 1
-		self.attNode = 2
+		self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
+		self.defNode = 12
 		self.g.nodes[0]["numUav"] = self.numUav
 		self.uavNodes=[0 for i in range(self.numUav)]
 
+		attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
+		self.g.nodes[attNode]["isAtt"] = 1
+		self.attNode = attNode
+		
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
 		             "attState": self._parseStateAtt(), "attR":0,
@@ -172,8 +201,8 @@ class Env(object):
 
 		self.t += 1
 
-		defR = 0
-		attR = 0
+		defR = 0.0
+		attR = 0.0
 
 		if (self.t == self.maxT):
 			self.end = True
