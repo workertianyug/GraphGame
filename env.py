@@ -91,39 +91,51 @@ def getDefaultGraph5x5():
 
 class Env(object):
 	
-	def __init__(self, gfn, numUav):
+	def __init__(self, gfn, numUav, numUav2):
+		""" game information """
 		self.gfn = gfn
 		self.g, self.pos = gfn()
 		self.end = False
 		self.t = 0
+		""" def state """
 		self.defNode = -1
-		self.attNode = -1
 		self.defPos = None
+		""" att state """
+		self.attNode = -1
 		self.attPos = None
+		""" uav state """
 		self.numUav = numUav
 		self.uavNodes = [-1 for i in range(numUav)]
 		self.uavPoss = [None for i in range(numUav)]
-		
+		""" uav2 state """
+		self.numUav2 = numUav2
+		self.uav2Poss = [None for i in range(numUav2)]
 
 	
 	def resetGame(self):
+		""" game information """
 		self.end = False
 		self.g, self.pos = self.gfn()
 		self.t = 0
 		self.maxT = 100
 		# initial locations will be randomized in the future
+		""" def state """
 		self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
 		self.defNode = 12
 		self.defPos = self.pos[12]
-		self.g.nodes[0]["numUav"] = self.numUav
-		self.uavNodes=[0 for i in range(self.numUav)]
-		self.uavPoss = [self.pos[i] for i in range(self.numUav)]
-
+		""" att state """
 		attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
 		self.g.nodes[attNode]["isAtt"] = 1
 		self.attNode = attNode
 		self.attPos = self.pos[attNode]
-		
+		""" uav state """
+		self.g.nodes[0]["numUav"] = self.numUav
+		self.uavNodes=[0 for i in range(self.numUav)]
+		self.uavPoss = [self.pos[0] for i in range(self.numUav)]
+		""" uav2 state """
+		self.uav2Poss = [self.pos[12] for i in range(self.numUav2)]
+
+		# TODO: add in uav2 state information
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
 		             "attState": self._parseStateAtt(), "attR":0,
@@ -145,6 +157,7 @@ class Env(object):
 		self.g.nodes[edge[0]]["isDef"] = 0
 		self.g.nodes[edge[1]]["isDef"] = 1
 		self.defNode = edge[1]
+		self.defPos = self.pos[edge[1]]
 
 		return 42
 
@@ -159,17 +172,19 @@ class Env(object):
 			""" the attacker chooses to attack, increase the counter """
 			if (self.g.nodes[edge[0]]["ctr"] < self.g.nodes[edge[0]]["d"]):
 				self.g.nodes[edge[0]]["ctr"] += 1
+				self.attPos = self.pos[edge[0]]
 		else:
 			""" reset the counter if the the attacker move away """
 			self.g.nodes[0]["ctr"] = 0
 			self.g.nodes[edge[0]]["isAtt"] = 0
 			self.g.nodes[edge[1]]["isAtt"] = 1
 			self.attNode = edge[1]
+			self.attPos = self.pos[edge[1]]
 
 		return 42
 
+	""" uav move: along the edges """
 	def _uavMoves(self, edges):
-
 		for i in range(0,len(edges)):
 			edge = edges[i]
 			if (not self.g.has_edge(*edge)):
@@ -184,7 +199,22 @@ class Env(object):
 
 		return 42
 
-	
+	""" 
+	uav2 move: continuously above the graph 
+	moves: (direction, speed)
+
+	update position of each uav2 
+	"""
+	def _uav2Moves(self,moves):
+		for i in range(0,len(moves)):
+			(curDir, curVel) = moves[i]
+			prevPos = self.uav2Poss[i]
+			curPosx = prevPos[0] + curVel * np.sin(curDir)
+			curPosy = prevPos[1] + curVel * np.cos(curDir)
+			self.uav2Poss[i] = np.array([curPosx,curPosy])
+			""" TODO: check whether moving out of boundary here """
+		return 42
+
 
 	""" 
 	return the state that defender can see 
@@ -228,11 +258,21 @@ class Env(object):
 		return gUav
 
 
-	def step(self, defAct, attAct, uavActs):
+	def _parseStateUav2(self):
+		gUav = self.g.copy()
+		for i in gUav.nodes:
+			if gUav.nodes[i]["isAtt"] == 1 and gUav.nodes[i]["numUav"] == 0:
+				gUav.nodes[i]["isAtt"] = 0
+		""" should also know the position of every uav """
+		gUav.graph["uav2Poss"] = self.uav2Poss
+		return gUav
+
+	def step(self, defAct, attAct, uavActs, uav2Acts):
 		
 		self._defMove(defAct)
 		self._attMove(attAct)
 		self._uavMoves(uavActs)
+		self._uav2Moves(uav2Acts)
 
 		self.t += 1
 
@@ -255,6 +295,8 @@ class Env(object):
 			 self.end = True
 			 defR = - self.g.nodes[self.attNode]["r"]
 			 attR = self.g.nodes[self.attNode]["r"]
+
+		""" TODO: check if uav find an attacker """
 
 		stateDict = {"defState": self._parseStateDef(), "defR":defR,
 					 "defNode": self.defNode,

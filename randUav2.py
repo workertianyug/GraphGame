@@ -3,7 +3,7 @@ import numpy as np
 from env import *
 
 
-class RandUav(object):
+class RandUav2(object):
 	
 	def __init__(self):
 
@@ -15,18 +15,14 @@ class RandUav(object):
 	take in uav state
 	output a random valid action 
 	uavState: the networkx graph representing defender state
-	uavNode: defender's current location
+	return: move: (dir, vel)
 	"""
-	def act(self, uavState, uavNode):
+	def act(self, uavState):
 
-		if (uavState.nodes[uavNode]["numUav"] == 0):
-			raise ValueError("uav location doesn't match")
+		direc = self.rand.uniform(0.0,2*np.pi)
+		veloc = 1.0
 
-		validActions = list(uavState.out_edges([uavNode]))
-		a = self.rand.randint(0, len(validActions),size=1)[0]
-
-
-		return validActions[a]
+		return (direc, veloc)
 
 
 

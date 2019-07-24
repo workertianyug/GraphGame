@@ -6,7 +6,7 @@ from randDef import *
 from randAtt import *
 from msgDef import *
 from randUav import *
-
+from randUav2 import *
 import time
 
 """
@@ -15,7 +15,7 @@ receive feedback
 perform training
 evaluate performance 
 """
-def run(env, defender, attacker, uavs, numEpisode,gui):
+def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 	""" place to setup gui """
 	if (gui):
 		fig,ax = plt.subplots(figsize=(6,4))
@@ -36,23 +36,31 @@ def run(env, defender, attacker, uavs, numEpisode,gui):
 			nodeColors = updateNodeColor(env.g)
 			nx.draw_networkx_nodes(env.g, pos, node_color = nodeColors)
 			nx.draw_networkx_edges(env.g, pos, edge_color = "black")
+			plt.axis("scaled")
 			plt.show(block=False)
 			plt.pause(1)
 			plt.clf()
 				
 		while(env.end == False):
+			""" defender make move """
 			defAct = defender.act(stateDict["defState"], stateDict["defNode"])
+			""" attacker make move """
 			attAct = attacker.act(stateDict["attState"], stateDict["attNode"])
-
+			""" uavs make move together """
 			uavActs = []
 			for i in range(len(uavs)):
 				uavAct = uavs[i].act(stateDict["uavState"],stateDict["uavNodes"][i])
 				uavActs.append(uavAct)
 
+			""" TODO: uav2s make move together """
+			uav2Acts = []
+			for i in range(len(uav2s)):
+				uav2Act = uav2s[i].act(None)
+				uav2Acts.append(uav2Act)
 			
 			print ("t=%d def act: %s att act:%s uav acts:[%s]" % (env.t, str(defAct), str(attAct), str(uavActs)))
 			
-			stateDictAfter = env.step(defAct, attAct,uavActs)
+			stateDictAfter = env.step(defAct, attAct,uavActs,uav2Acts)
 
 			""" place to train if player need to train """
 			defender.train(stateDict["defState"],
@@ -64,10 +72,15 @@ def run(env, defender, attacker, uavs, numEpisode,gui):
 
 			""" place to draw the current environment """
 			if (gui):
+				for i in env.uav2Poss:
+					cir2 = plt.Circle((i[0], i[1]), 0.25, color='yellow')
+					plt.gcf().gca().add_artist(cir2)
+					
 				nodeColors = updateNodeColor(env.g)
 				nx.draw_networkx_nodes(env.g, pos, node_color = nodeColors)
 				nx.draw_networkx_edges(env.g, pos, edge_color = "black")
 				nx.draw_networkx_labels(env.g, pos)
+				plt.axis("scaled")
 				plt.show(block=False)
 				plt.pause(1)
 				plt.clf()
@@ -111,13 +124,14 @@ def updateNodeColor(g):
 def main():
 	isGui = True
 	numUav = 0
-	env = Env(getDefaultGraph5x5,numUav)
+	numUav2 = 1
+	env = Env(getDefaultGraph5x5,numUav,numUav2)
 	defender = RandDef()
 	# defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
-
-	run(env, defender, attacker, uavs, 5000, isGui)
+	uav2s = [RandUav2() for i in range(numUav2)]
+	run(env, defender, attacker, uavs, uav2s, 5000, isGui)
 
 
 
