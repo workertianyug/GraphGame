@@ -19,7 +19,8 @@ def run(env, defender, attacker, uavs, numEpisode,gui):
 	""" place to setup gui """
 	if (gui):
 		fig,ax = plt.subplots(figsize=(6,4))
-		pos = nx.spring_layout(env.g, iterations=100)
+		# pos = nx.spring_layout(env.g, iterations=100)
+		pos = env.pos
 
 	""" initialize reward tracking """
 	cumDefR = 0.0
@@ -66,6 +67,7 @@ def run(env, defender, attacker, uavs, numEpisode,gui):
 				nodeColors = updateNodeColor(env.g)
 				nx.draw_networkx_nodes(env.g, pos, node_color = nodeColors)
 				nx.draw_networkx_edges(env.g, pos, edge_color = "black")
+				nx.draw_networkx_labels(env.g, pos)
 				plt.show(block=False)
 				plt.pause(1)
 				plt.clf()
@@ -103,15 +105,15 @@ def updateNodeColor(g):
 		elif g.nodes[i]["numUav"] > 0:
 			values.append("yellow")
 		else:
-			values.append("black")
+			values.append("gray")
 	return values
 
 def main():
-	isGui = False
-	numUav = 1
+	isGui = True
+	numUav = 0
 	env = Env(getDefaultGraph5x5,numUav)
-	# defender = RandDef()
-	defender = MsgDef(env.g)
+	defender = RandDef()
+	# defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 

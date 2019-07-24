@@ -60,36 +60,69 @@ def getDefaultGraph5x5():
 	g.graph["utilDefC"] = 2.0
 	g.graph["utilAttC"] = -2.0
 
-	return g
+	pos = dict()
+	pos[0] = np.array([0.0,4.0])
+	pos[1] = np.array([1.0,4.0])
+	pos[2] = np.array([2.0,4.0])
+	pos[3] = np.array([3.0,4.0])
+	pos[4] = np.array([4.0,4.0])
+	pos[5] = np.array([0.0,3.0])
+	pos[6] = np.array([1.0,3.0])
+	pos[7] = np.array([2.0,3.0])
+	pos[8] = np.array([3.0,3.0])
+	pos[9] = np.array([4.0,3.0])
+	pos[10] = np.array([0.0,2.0])
+	pos[11] = np.array([1.0,2.0])
+	pos[12] = np.array([2.0,2.0])
+	pos[13] = np.array([3.0,2.0])
+	pos[14] = np.array([4.0,2.0])
+	pos[15] = np.array([0.0,1.0])
+	pos[16] = np.array([1.0,1.0])
+	pos[17] = np.array([2.0,1.0])
+	pos[18] = np.array([3.0,1.0])
+	pos[19] = np.array([4.0,1.0])
+	pos[20] = np.array([0.0,0.0])
+	pos[21] = np.array([1.0,0.0])
+	pos[22] = np.array([2.0,0.0])
+	pos[23] = np.array([3.0,0.0])
+	pos[24] = np.array([4.0,0.0])
+
+	return g,pos
 
 class Env(object):
 	
 	def __init__(self, gfn, numUav):
 		self.gfn = gfn
-		self.g = gfn()
+		self.g, self.pos = gfn()
 		self.end = False
 		self.t = 0
 		self.defNode = -1
 		self.attNode = -1
+		self.defPos = None
+		self.attPos = None
 		self.numUav = numUav
 		self.uavNodes = [-1 for i in range(numUav)]
+		self.uavPoss = [None for i in range(numUav)]
 		
 
 	
 	def resetGame(self):
 		self.end = False
-		self.g = self.gfn()
+		self.g, self.pos = self.gfn()
 		self.t = 0
 		self.maxT = 100
 		# initial locations will be randomized in the future
 		self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
 		self.defNode = 12
+		self.defPos = self.pos[12]
 		self.g.nodes[0]["numUav"] = self.numUav
 		self.uavNodes=[0 for i in range(self.numUav)]
+		self.uavPoss = [self.pos[i] for i in range(self.numUav)]
 
 		attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
 		self.g.nodes[attNode]["isAtt"] = 1
 		self.attNode = attNode
+		self.attPos = self.pos[attNode]
 		
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
@@ -150,6 +183,8 @@ class Env(object):
 			self.uavNodes[i] = edge[1]
 
 		return 42
+
+	
 
 	""" 
 	return the state that defender can see 

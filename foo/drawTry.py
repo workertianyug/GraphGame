@@ -35,8 +35,8 @@ def getDefaultGraph0():
 	return g0
 
 fig, ax = plt.subplots(figsize=(6,4))
-ax.set_xticks([])
-ax.set_yticks([])
+# ax.set_xticks([])
+# ax.set_yticks([])
 
 g = getDefaultGraph0()
 pos = nx.spring_layout(g)
@@ -59,28 +59,35 @@ for i in g.nodes:
 
 nx.draw_networkx_nodes(g, pos, node_color = value)
 nx.draw_networkx_edges(g, pos, edge_color='black')
-plt.show(block=False)
+nx.draw_networkx_labels(g, pos)
+circle2 = plt.Circle((0.5, 0.5), 0.2, color='blue')
+
+ax.add_artist(circle2)
+
+plt.axis("scaled")
+print pos
+plt.show(block=True)
 plt.pause(1)
 plt.clf()
 
-g.nodes(data=True)[1]["isDef"] = 1
-g.nodes(data=True)[3]["isAtt"] = 1
-value = []
-for i in g.nodes:
-	if g.nodes(data=True)[i]["isDef"]==1:
-		value.append("blue")
-	elif g.nodes(data=True)[i]["isAtt"]==1:
-		value.append("red")
-	else:
-		value.append("black")
+# g.nodes(data=True)[1]["isDef"] = 1
+# g.nodes(data=True)[3]["isAtt"] = 1
+# value = []
+# for i in g.nodes:
+# 	if g.nodes(data=True)[i]["isDef"]==1:
+# 		value.append("blue")
+# 	elif g.nodes(data=True)[i]["isAtt"]==1:
+# 		value.append("red")
+# 	else:
+# 		value.append("black")
 
-ax.set_xticks([])
-ax.set_yticks([])
-nx.draw_networkx_nodes(g, pos, node_color = value)
-nx.draw_networkx_edges(g, pos, edge_color='black')
-plt.show(block=False)
-plt.pause(3)
-plt.close()
+# ax.set_xticks([])
+# ax.set_yticks([])
+# nx.draw_networkx_nodes(g, pos, node_color = value)
+# nx.draw_networkx_edges(g, pos, edge_color='black')
+# plt.show(block=False)
+# plt.pause(3)
+# plt.close()
 
 
 
