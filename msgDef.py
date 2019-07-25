@@ -96,7 +96,7 @@ class MsgDef(object):
 	"""
 	def _gtmp2intmp(self,gtemp):
 		intmp = gtemp.copy()
-		inNodeFields = ["isDef","isAtt","numUav","r","d"]
+		inNodeFields = ["isDef","isAtt","numUav","r","d","x","y"]
 
 		for nodeIndex, nodeFeature in gtemp.nodes(data=True):
 			intmp.add_node(nodeIndex, 

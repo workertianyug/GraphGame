@@ -2,37 +2,24 @@ import networkx as nx
 import numpy as np
 import random
 
-""" return a default graph for use """
-""" [isDef, isAtt, numUav, reward, penetration time] """
-def getDefaultGraph0():
 
-	g0 = nx.DiGraph()
-	g0.add_node(0, isDef=0, isAtt=0, numUav=0, r=1.0, d=1, ctr=0)
-	g0.add_node(1, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
-	g0.add_node(2, isDef=0, isAtt=0, numUav=0, r=2.0, d=2, ctr=0)
-	g0.add_node(3, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
-
-	g0.add_edge(0,0)
-	g0.add_edge(1,1)
-	g0.add_edge(2,2)
-	g0.add_edge(3,3)
-	
-	g0.add_edge(0,1)
-	g0.add_edge(1,0)
-	g0.add_edge(1,2)
-	g0.add_edge(2,1)
-	g0.add_edge(2,3)
-	g0.add_edge(3,2)
-	g0.add_edge(0,3)
-	g0.add_edge(3,0)
-	g0.add_edge(0,2)
-	g0.add_edge(2,0)
-
-	g0.graph["utilDefC"] = 1.0
-	g0.graph["utilAttC"] = -1.0
-
-	return g0
-
+"""
+To create a valid graph:
+node feature:
+	isDef: whether defender is on this node
+	isAtt: whether attacker is on this node
+	numUav: deprecated
+	r: the reward of this node
+	d: penetration time of this node
+	ctr: local time tracker for completing an attack
+	x: x coordinate of this node
+	y: y coordinate of this node
+edge feature:
+	None
+graph feature:
+	utilDefC: utility for defender if he catches the attacker
+	utilAttC: utility for attacker if she is caught by the defender
+"""
 def getDefaultGraph5x5():
 	g = nx.DiGraph()
 
@@ -87,29 +74,46 @@ def getDefaultGraph5x5():
 	pos[23] = np.array([3.0,0.0])
 	pos[24] = np.array([4.0,0.0])
 
+	for i in range(0,25):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
 	return g,pos
 
+"""
+The simulation environment
+"""
 class Env(object):
 	
-	def __init__(self, gfn, numUav, numUav2):
+	def __init__(self, gfn, numUav, numUav2, uav2Range=1.0):
+		
 		""" game information """
 		self.gfn = gfn
 		self.g, self.pos = gfn()
 		self.end = False
 		self.t = 0
+		self.minX, self.maxX, self.minY, self.maxY = self._getBoundary(self.pos)
+
 		""" def state """
 		self.defNode = -1
 		self.defPos = None
+
 		""" att state """
 		self.attNode = -1
 		self.attPos = None
+		# whether attacker is found in this episode
+		self.isFound = False 
+
 		""" uav state """
 		self.numUav = numUav
 		self.uavNodes = [-1 for i in range(numUav)]
 		self.uavPoss = [None for i in range(numUav)]
+
 		""" uav2 state """
 		self.numUav2 = numUav2
 		self.uav2Poss = [None for i in range(numUav2)]
+		self.uav2Range = uav2Range
+		#whether each uav has found attacker
+		self.uav2Found = [False for i in range(numUav2)] 
 
 	
 	def resetGame(self):
@@ -128,12 +132,14 @@ class Env(object):
 		self.g.nodes[attNode]["isAtt"] = 1
 		self.attNode = attNode
 		self.attPos = self.pos[attNode]
+		self.isFound = False
 		""" uav state """
 		self.g.nodes[0]["numUav"] = self.numUav
 		self.uavNodes=[0 for i in range(self.numUav)]
 		self.uavPoss = [self.pos[0] for i in range(self.numUav)]
 		""" uav2 state """
 		self.uav2Poss = [self.pos[12] for i in range(self.numUav2)]
+		self.uav2Found = [False for i in range(self.numUav2)]
 
 		# TODO: add in uav2 state information
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
@@ -145,6 +151,22 @@ class Env(object):
 		             "uavNodes":self.uavNodes}
 
 		return stateDict
+
+
+	def _getBoundary(self, pos):
+		minX, maxX = pos[0][0], pos[0][0]
+		minY, maxY = pos[0][1], pos[0][1]
+		for i in pos:
+			if pos[i][0] < minX:
+				minX = pos[i][0]
+			if pos[i][0] > maxX:
+				maxX = pos[i][0]
+			if pos[i][1] < minY:
+				minY = pos[i][1]
+			if pos[i][1] > maxY:
+				maxY = pos[i][1]
+		return minX-0.5,maxX+0.5,minY-0.5,maxY+0.5
+
 
 	""" defender move: move along edges """
 	def _defMove(self, edge):
@@ -207,10 +229,20 @@ class Env(object):
 	"""
 	def _uav2Moves(self,moves):
 		for i in range(0,len(moves)):
+			if self.uav2Found[i] == True:
+				self.uav2Poss[i] = self.attPos
+				continue
+
 			(curDir, curVel) = moves[i]
 			prevPos = self.uav2Poss[i]
 			curPosx = prevPos[0] + curVel * np.sin(curDir)
 			curPosy = prevPos[1] + curVel * np.cos(curDir)
+			if (curPosx < self.minX 
+				or curPosx > self.maxX 
+				or curPosy < self.minY 
+				or curPosy > self.maxY):
+				continue
+
 			self.uav2Poss[i] = np.array([curPosx,curPosy])
 			""" TODO: check whether moving out of boundary here """
 		return 42
@@ -227,9 +259,8 @@ class Env(object):
 	def _parseStateDef(self):
 
 		gDef = self.g.copy()
-		for i in gDef.nodes:
-			if gDef.nodes[i]["isAtt"] == 1 and gDef.nodes[i]["numUav"] == 0:
-				gDef.nodes[i]["isAtt"] = 0
+		if not self.isFound:
+			gDef.nodes[self.attNode]["isAtt"] = 0
 		return gDef
 
 	""" 
@@ -259,13 +290,17 @@ class Env(object):
 
 
 	def _parseStateUav2(self):
-		gUav = self.g.copy()
-		for i in gUav.nodes:
-			if gUav.nodes[i]["isAtt"] == 1 and gUav.nodes[i]["numUav"] == 0:
-				gUav.nodes[i]["isAtt"] = 0
+		gUav2 = self.g.copy()
+		for i in gUav2.nodes:
+			if gUav2.nodes[i]["isAtt"] == 1 and gUav2.nodes[i]["numUav"] == 0:
+				gUav2.nodes[i]["isAtt"] = 0
 		""" should also know the position of every uav """
-		gUav.graph["uav2Poss"] = self.uav2Poss
-		return gUav
+		gUav2.graph["uav2Poss"] = self.uav2Poss
+		""" should also know the position of every node """
+		for p in self.pos:
+			gUav2.nodes[i]["x"] = pos[i][0]
+			gUav2.nodes[i]["y"] = pos[i][1]
+		return gUav2
 
 	def step(self, defAct, attAct, uavActs, uav2Acts):
 		
@@ -297,6 +332,11 @@ class Env(object):
 			 attR = self.g.nodes[self.attNode]["r"]
 
 		""" TODO: check if uav find an attacker """
+		for i in range(0,len(self.uav2Poss)):
+			curUav2Pos = self.uav2Poss[i] 
+			if np.linalg.norm(curUav2Pos - self.attPos) < self.uav2Range:
+				self.isFound = True
+				self.uav2Found[i] = True
 
 		stateDict = {"defState": self._parseStateDef(), "defR":defR,
 					 "defNode": self.defNode,

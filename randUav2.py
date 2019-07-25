@@ -5,11 +5,12 @@ from env import *
 
 class RandUav2(object):
 	
-	def __init__(self):
+	def __init__(self,uav2Range=1.0):
 
-		self.seed = 7
-		self.rand = np.random.RandomState(seed=self.seed)
-
+		# self.seed = 7
+		# self.rand = np.random.RandomState(seed=self.seed)
+		self.rand = np.random.RandomState()
+		self.uav2Range = uav2Range
 
 	""" 
 	take in uav state
