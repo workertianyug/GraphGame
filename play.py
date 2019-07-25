@@ -58,7 +58,8 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				uav2Act = uav2s[i].act(None)
 				uav2Acts.append(uav2Act)
 			
-			print ("t=%d def act: %s att act:%s uav acts:[%s]" % (env.t, str(defAct), str(attAct), str(uavActs)))
+			print ("t=%d def act: %s att act:%s uav acts:[%s]" 
+				% (env.t, str(defAct), str(attAct), str(uavActs)))
 			
 			stateDictAfter = env.step(defAct, attAct,uavActs,uav2Acts)
 
@@ -102,7 +103,8 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 
 	print(cumDefR,cumAttR,catch)
 
-	print ("numEpisode=%d avgDefR=%s avgAttR=%s" % (numEpisode, str(avgDefR), str(avgAttR)))
+	print ("numEpisode=%d avgDefR=%s avgAttR=%s" 
+		% (numEpisode, str(avgDefR), str(avgAttR)))
 
 	return 42
 
@@ -126,8 +128,8 @@ def main():
 	numUav = 0
 	numUav2 = 3
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	# defender = RandDef()
-	defender = MsgDef(env.g)
+	defender = RandDef()
+	# defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	uav2s = [RandUav2() for i in range(numUav2)]

@@ -85,7 +85,7 @@ The simulation environment
 class Env(object):
 	
 	def __init__(self, gfn, numUav, numUav2, uav2Range=1.0):
-		
+
 		""" game information """
 		self.gfn = gfn
 		self.g, self.pos = gfn()
@@ -115,7 +115,9 @@ class Env(object):
 		#whether each uav has found attacker
 		self.uav2Found = [False for i in range(numUav2)] 
 
-	
+	"""
+	reset the game state after each episode
+	"""
 	def resetGame(self):
 		""" game information """
 		self.end = False
@@ -144,15 +146,27 @@ class Env(object):
 		# TODO: add in uav2 state information
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
+
 		             "attState": self._parseStateAtt(), "attR":0,
 		             "attNode": self.attNode,
+
 		             "end":self.end,
-		             "uavState":self._parseStateUav(), "uavRs":[0 for i in range(self.numUav)],
-		             "uavNodes":self.uavNodes}
+
+		             "uavState":self._parseStateUav(), 
+		             "uavRs":[0 for i in range(self.numUav)],
+		             "uavNodes":self.uavNodes,
+
+		             "uav2State": self._parseStateUav2(),
+		             "uav2R":[0 for i in range(0,self.numUav2)]
+		             "uav2Poss":self.uav2Poss}
 
 		return stateDict
 
-
+	"""
+	take in position of every node on the graph
+	output the rectangle boundary of the graph
+	uav2 cannot move across these boundaries
+	"""
 	def _getBoundary(self, pos):
 		minX, maxX = pos[0][0], pos[0][0]
 		minY, maxY = pos[0][1], pos[0][1]
@@ -224,7 +238,6 @@ class Env(object):
 	""" 
 	uav2 move: continuously above the graph 
 	moves: (direction, speed)
-
 	update position of each uav2 
 	"""
 	def _uav2Moves(self,moves):
@@ -270,7 +283,10 @@ class Env(object):
 	r
 	d
 	ctr
+	x
+	y
 	"""
+	#TODO: update isFound
 	def _parseStateAtt(self):
 
 		gAtt = self.g.copy()
@@ -280,6 +296,9 @@ class Env(object):
 				gAtt.nodes[i]["numUav"] = 0
 		return gAtt
 
+	"""
+	deprecated: uav will not be used
+	"""
 	def _parseStateUav(self):
 
 		gUav = self.g.copy()
@@ -288,18 +307,30 @@ class Env(object):
 				gUav.nodes[i]["isAtt"] = 0
 		return gUav
 
-
+	"""
+	return the state that uav2s can see
+	node:
+		isDef
+		isAtt: only when attacker is found
+		r
+		d
+		x
+		y
+	uav2s states:
+		uav2Poss
+		uav2Found
+	"""
 	def _parseStateUav2(self):
+
 		gUav2 = self.g.copy()
+		""" no information abut ctr """
 		for i in gUav2.nodes:
-			if gUav2.nodes[i]["isAtt"] == 1 and gUav2.nodes[i]["numUav"] == 0:
-				gUav2.nodes[i]["isAtt"] = 0
+			del gUav2.nodes[i]["ctr"]
+		if not self.isFound:
+			gUav2.nodes[self.attNode]["isAtt"] = 0
 		""" should also know the position of every uav """
 		gUav2.graph["uav2Poss"] = self.uav2Poss
-		""" should also know the position of every node """
-		for p in self.pos:
-			gUav2.nodes[i]["x"] = pos[i][0]
-			gUav2.nodes[i]["y"] = pos[i][1]
+		gUav2.graph["uav2Found"] = self.uav2Found
 		return gUav2
 
 	def step(self, defAct, attAct, uavActs, uav2Acts):
@@ -331,7 +362,7 @@ class Env(object):
 			 defR = - self.g.nodes[self.attNode]["r"]
 			 attR = self.g.nodes[self.attNode]["r"]
 
-		""" TODO: check if uav find an attacker """
+		""" check if uav find an attacker """
 		for i in range(0,len(self.uav2Poss)):
 			curUav2Pos = self.uav2Poss[i] 
 			if np.linalg.norm(curUav2Pos - self.attPos) < self.uav2Range:
@@ -340,11 +371,19 @@ class Env(object):
 
 		stateDict = {"defState": self._parseStateDef(), "defR":defR,
 					 "defNode": self.defNode,
+
 		             "attState": self._parseStateAtt(), "attR":attR,
 		             "attNode": self.attNode,
+
 		             "end":self.end,
-		             "uavState": self._parseStateUav(), "uavR":[0 for i in range(0,self.numUav)],
-		             "uavNodes": self.uavNodes}
+
+		             "uavState": self._parseStateUav(), 
+		             "uavR":[0 for i in range(0,self.numUav)],
+		             "uavNodes": self.uavNodes,
+		             
+		             "uav2State": self._parseStateUav2(),
+		             "uav2R":[0 for i in range(0,self.numUav2)]
+		             "uav2Poss":self.uav2Poss}
 		return stateDict
 
 
