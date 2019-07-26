@@ -18,7 +18,7 @@ class RandUav2(object):
 	uavState: the networkx graph representing defender state
 	return: move: (dir, vel)
 	"""
-	def act(self, uavState):
+	def act(self, uavState,eps=0):
 
 		direc = self.rand.uniform(0.0,2*np.pi)
 		veloc = 1.0

@@ -17,7 +17,7 @@ class RandDef(object):
 	defState: the networkx graph representing defender state
 	defNode: defender's current location
 	"""
-	def act(self, defState, defNode):
+	def act(self, defState, defNode, eps=0):
 
 		if (defState.nodes[defNode]["isDef"] != 1):
 			raise ValueError("def location doesn't match")

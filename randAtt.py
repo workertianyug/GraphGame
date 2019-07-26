@@ -20,7 +20,7 @@ class RandAtt(object):
 	attState: the networkx graph representing attacker state
 	attNode: attacker's current location
 	"""
-	def act(self, attState, attNode):
+	def act(self, attState, attNode, eps=0):
 
 		if (attState.nodes[attNode]["isAtt"] != 1):
 			raise ValueError("att location doesn't match")

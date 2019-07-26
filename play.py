@@ -43,7 +43,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				
 		while(env.end == False):
 			""" defender make move """
-			defAct = defender.act(stateDict["defState"], stateDict["defNode"])
+			defAct = defender.act(stateDict["defState"], stateDict["defNode"],eps)
 			""" attacker make move """
 			attAct = attacker.act(stateDict["attState"], stateDict["attNode"])
 			""" uavs make move together """
@@ -68,7 +68,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				           defAct,
 				           stateDictAfter["defR"],
 				           stateDictAfter["defState"],
-				           env.end)
+				           env.end,eps)
 			stateDict = stateDictAfter
 
 			""" place to draw the current environment """
@@ -128,8 +128,8 @@ def main():
 	numUav = 0
 	numUav2 = 3
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	defender = RandDef()
-	# defender = MsgDef(env.g)
+	# defender = RandDef()
+	defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	uav2s = [RandUav2() for i in range(numUav2)]

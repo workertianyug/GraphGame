@@ -157,7 +157,7 @@ class Env(object):
 		             "uavNodes":self.uavNodes,
 
 		             "uav2State": self._parseStateUav2(),
-		             "uav2R":[0 for i in range(0,self.numUav2)]
+		             "uav2R":[0 for i in range(0,self.numUav2)],
 		             "uav2Poss":self.uav2Poss}
 
 		return stateDict
@@ -382,7 +382,7 @@ class Env(object):
 		             "uavNodes": self.uavNodes,
 		             
 		             "uav2State": self._parseStateUav2(),
-		             "uav2R":[0 for i in range(0,self.numUav2)]
+		             "uav2R":[0 for i in range(0,self.numUav2)],
 		             "uav2Poss":self.uav2Poss}
 		return stateDict
 

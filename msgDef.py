@@ -23,26 +23,13 @@ from collections import deque
 
 import random
 
+OBSERVEEPS = 5
+EPSILON = 0.01
+
 """
 things todo:
 
 """
-
-def create_loss_ops(target_op, output_ops):
-		loss_ops = [
-		  tf.losses.softmax_cross_entropy(target_op.edges, output_op.edges)
-		  for output_op in output_ops
-		]
-		return loss_ops
-
-def make_all_runnable_in_session(*args):
-	"""Lets an iterable of TF graphs be output from a session as NP graphs."""
-	return [utils_tf.make_runnable_in_session(a) for a in args]
-
-
-def _create_feature(attr, fields):
-   return np.hstack([np.array(attr[field], dtype=float) for field in fields])
-
 class MsgDef(object):
 
 	"""
@@ -53,7 +40,8 @@ class MsgDef(object):
 		tf.reset_default_graph()
 		self.SEED = 3
 		self.GAMMA = 0.99
-		self.BATCH = 1
+		self.BATCH = 5
+		random.seed(a=self.SEED)
 		self.random = np.random.RandomState(seed=self.SEED)
 		np.random.seed(self.SEED)
 		tf.set_random_seed(self.SEED)
@@ -74,7 +62,7 @@ class MsgDef(object):
 
 		self.output_ops_tr = self.model(self.inputPh, self.numProcessingSteps)
 
-		self.loss_ops_tr = create_loss_ops(self.targetPh, self.output_ops_tr)
+		self.loss_ops_tr = self._create_loss_ops(self.targetPh, self.output_ops_tr)
 
 		self.loss_op_tr = sum(self.loss_ops_tr) / self.numProcessingSteps
 
@@ -82,7 +70,7 @@ class MsgDef(object):
 		self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
 		self.step_op = self.optimizer.minimize(self.loss_op_tr)
 
-		self.inputPh, self.targetPh = make_all_runnable_in_session(self.inputPh, 
+		self.inputPh, self.targetPh = self._make_all_runnable_in_session(self.inputPh, 
 																	 self.targetPh)
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
@@ -90,6 +78,22 @@ class MsgDef(object):
 		self.epsilon = 0.01
 
 		self.outg = None
+
+	def _create_feature(self, attr, fields):
+		return np.hstack([np.array(attr[field], dtype=float) for field in fields])
+
+
+	def _create_loss_ops(self,target_op, output_ops):
+		loss_ops = [
+		  tf.losses.softmax_cross_entropy(target_op.edges, output_op.edges)
+		  for output_op in output_ops
+		]
+		return loss_ops
+
+	def _make_all_runnable_in_session(self, *args):
+		"""Lets an iterable of TF graphs be output from a session as NP graphs."""
+		return [utils_tf.make_runnable_in_session(a) for a in args]
+
 
 	"""
 	from template graph to example input graph to create placeholder 
@@ -100,7 +104,7 @@ class MsgDef(object):
 
 		for nodeIndex, nodeFeature in gtemp.nodes(data=True):
 			intmp.add_node(nodeIndex, 
-						   features=_create_feature(nodeFeature, inNodeFields))
+						   features=self._create_feature(nodeFeature, inNodeFields))
 			
 		for nodeIndex, nodeFeature in intmp.nodes(data=True):
 			for attr in nodeFeature.keys():
@@ -137,13 +141,21 @@ class MsgDef(object):
 
 		return ttmp
 
-	def act(self,defState, defNode):
+	def act(self,defState, defNode, eps):
 		"""
 		parse defstate to the input format for feed_dict
 		evaulate network to give action
 		"""
 		if (defState.nodes[defNode]["isDef"] != 1):
 			raise ValueError("def location doesn't match")
+
+		""" if episod is low or random value is les than epsilon
+			take random action
+		"""
+		if (eps < OBSERVEEPS) or (random.random() < EPSILON):
+			validActions = list(defState.out_edges([defNode]))
+			a = self.random.randint(0, len(validActions),size=1)[0]
+			return validActions[a]
 
 		gin = self._gtmp2intmp(defState)
 		test_values = self.sess.run({
@@ -173,7 +185,7 @@ class MsgDef(object):
 	newState: networkx graph
 	terminal: bool
 	"""
-	def train(self,oldState, action, reward, newState, terminal):
+	def train(self,oldState, action, reward, newState, terminal, eps):
 		"""
 		store newState in the replay memory
 		sample transitions into feed_dict
@@ -181,16 +193,16 @@ class MsgDef(object):
 		"""
 		self.D.append((oldState,action,reward,newState,terminal))
 
-		# todo: change the sample method to use seed
-		minibatch = random.sample(self.D, self.BATCH)
+		""" if epsilon is too low, don't train, just observe """
+		if (eps < OBSERVEEPS):
+			return 42
 
-		
+		minibatch = random.sample(self.D, self.BATCH)
 		"""
 		evaluate network from newState
 		change output based on r & a
 		retrain network using oldState
 		"""
-
 		inputs = []
 		targets = []
 
