@@ -38,46 +38,47 @@ class MsgDef(object):
 	"""
 	def __init__(self,gtemp):
 		tf.reset_default_graph()
-		self.SEED = 3
-		self.GAMMA = 0.99
-		self.BATCH = 5
-		random.seed(a=self.SEED)
-		self.random = np.random.RandomState(seed=self.SEED)
-		np.random.seed(self.SEED)
-		tf.set_random_seed(self.SEED)
-		""" replay memory """
-		self.D = deque()
+		with tf.variable_scope("defscope"):
+			self.SEED = 3
+			self.GAMMA = 0.99
+			self.BATCH = 5
+			random.seed(a=self.SEED)
+			self.random = np.random.RandomState(seed=self.SEED)
+			np.random.seed(self.SEED)
+			tf.set_random_seed(self.SEED)
+			""" replay memory """
+			self.D = deque()
 
-		
-		""" initialize and setup the network """
-		self.inputPh = utils_tf.placeholders_from_networkxs(
-			[self._gtmp2intmp(gtemp)])
-		self.targetPh = utils_tf.placeholders_from_networkxs(
-			[self._gtmp2ttmp(gtemp)])
+			
+			""" initialize and setup the network """
+			self.inputPh = utils_tf.placeholders_from_networkxs(
+				[self._gtmp2intmp(gtemp)])
+			self.targetPh = utils_tf.placeholders_from_networkxs(
+				[self._gtmp2ttmp(gtemp)])
 
-		self.numProcessingSteps = 10
+			self.numProcessingSteps = 10
 
-		self.model = models.EncodeProcessDecode(edge_output_size=1,
-												node_output_size=0)
+			self.model = models.EncodeProcessDecode(edge_output_size=1,
+													node_output_size=0)
 
-		self.output_ops_tr = self.model(self.inputPh, self.numProcessingSteps)
+			self.output_ops_tr = self.model(self.inputPh, self.numProcessingSteps)
 
-		self.loss_ops_tr = self._create_loss_ops(self.targetPh, self.output_ops_tr)
+			self.loss_ops_tr = self._create_loss_ops(self.targetPh, self.output_ops_tr)
 
-		self.loss_op_tr = sum(self.loss_ops_tr) / self.numProcessingSteps
+			self.loss_op_tr = sum(self.loss_ops_tr) / self.numProcessingSteps
 
-		self.learning_rate = 1e-3
-		self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
-		self.step_op = self.optimizer.minimize(self.loss_op_tr)
+			self.learning_rate = 1e-3
+			self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
+			self.step_op = self.optimizer.minimize(self.loss_op_tr)
 
-		self.inputPh, self.targetPh = self._make_all_runnable_in_session(self.inputPh, 
-																	 self.targetPh)
-		self.sess = tf.Session()
-		self.sess.run(tf.global_variables_initializer())
+			self.inputPh, self.targetPh = self._make_all_runnable_in_session(self.inputPh, 
+																		 self.targetPh)
+			self.sess = tf.Session()
+			self.sess.run(tf.global_variables_initializer())
 
-		self.epsilon = 0.01
+			self.epsilon = 0.01
 
-		self.outg = None
+			self.outg = None
 
 	def _create_feature(self, attr, fields):
 		return np.hstack([np.array(attr[field], dtype=float) for field in fields])

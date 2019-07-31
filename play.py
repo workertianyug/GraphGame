@@ -63,7 +63,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				uav2Acts.append(uav2Act)
 			
 			print ("t=%d def act: %s att act:%s uav acts:[%s]" 
-				% (env.t, str(defAct), str(attAct), str(uavActs)))
+				% (env.t, str(defAct), str(attAct), str(uav2Acts)))
 			
 			stateDictAfter = env.step(defAct, attAct,uavActs,uav2Acts)
 
@@ -143,7 +143,7 @@ def updateNodeColor(g):
 def main():
 	isGui = True
 	numUav = 0
-	numUav2 = 1
+	numUav2 = 2
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
 	defender = RandDef()
 	# defender = MsgDef(env.g)

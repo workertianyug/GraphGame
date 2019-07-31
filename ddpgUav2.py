@@ -15,47 +15,54 @@ class ActorNetwork(object):
 	between -action_bound and action_bound
 	"""
 
-	def __init__(self, sess, state_dim, action_dim, action_bound, learning_rate, tau, batch_size):
-		self.sess = sess
-		self.s_dim = state_dim
-		self.a_dim = action_dim
-		self.action_bound = action_bound
-		self.learning_rate = learning_rate
-		self.tau = tau
-		self.batch_size = batch_size
+	def __init__(self, sess, state_dim, action_dim, action_bound, learning_rate, tau, batch_size, myid):
+		self.myid = myid
+		with tf.variable_scope("actor"+str(myid)):
+			self.sess = sess
+			self.s_dim = state_dim
+			self.a_dim = action_dim
+			self.action_bound = action_bound
+			self.learning_rate = learning_rate
+			self.tau = tau
+			self.batch_size = batch_size
 
-		# Actor Network
-		self.inputs, self.out, self.scaled_out = self.create_actor_network()
+			# Actor Network
+			self.inputs, self.out, self.scaled_out = self.create_actor_network()
 
-		self.network_params = tf.trainable_variables()
+			self.network_params = tf.trainable_variables(scope = "actor"+str(myid))
 
-		# Target Network
-		self.target_inputs, self.target_out, self.target_scaled_out = self.create_actor_network()
+			# Target Network
+			self.target_inputs, self.target_out, self.target_scaled_out = self.create_actor_network()
 
-		self.target_network_params = tf.trainable_variables()[
-			len(self.network_params):]
+			self.target_network_params = tf.trainable_variables(scope="actor"+str(myid))[
+				len(self.network_params):]
 
-		# Op for periodically updating target network with online network
-		# weights
-		self.update_target_network_params = \
-			[self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) +
-												  tf.multiply(self.target_network_params[i], 1. - self.tau))
-				for i in range(len(self.target_network_params))]
+			# Op for periodically updating target network with online network
+			# weights
+			self.update_target_network_params = \
+				[self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) +
+													  tf.multiply(self.target_network_params[i], 1. - self.tau))
+					for i in range(len(self.target_network_params))]
 
-		# This gradient will be provided by the critic network
-		self.action_gradient = tf.placeholder(tf.float32, [None, self.a_dim])
+			# This gradient will be provided by the critic network
+			self.action_gradient = tf.placeholder(tf.float32, [None, self.a_dim])
 
-		# Combine the gradients here
-		self.unnormalized_actor_gradients = tf.gradients(
-			self.scaled_out, self.network_params, -self.action_gradient)
-		self.actor_gradients = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
+			# Combine the gradients here
+			self.unnormalized_actor_gradients = tf.gradients(
+				self.scaled_out, self.network_params, -self.action_gradient)
+			# print "---"
+			# # print self.unnormalized_actor_gradients
+			# print self.network_params
+			# print len(self.network_params)
+			# return 
+			self.actor_gradients = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
 
-		# Optimization Op
-		self.optimize = tf.train.AdamOptimizer(self.learning_rate).\
-			apply_gradients(zip(self.actor_gradients, self.network_params))
+			# Optimization Op
+			self.optimize = tf.train.AdamOptimizer(self.learning_rate).\
+				apply_gradients(zip(self.actor_gradients, self.network_params))
 
-		self.num_trainable_vars = len(
-			self.network_params) + len(self.target_network_params)
+			self.num_trainable_vars = len(
+				self.network_params) + len(self.target_network_params)
 
 	def create_actor_network(self):
 		inputs = tflearn.input_data(shape=[None, self.s_dim])
@@ -103,45 +110,48 @@ class CriticNetwork(object):
 
 	"""
 
-	def __init__(self, sess, state_dim, action_dim, learning_rate, tau, gamma, num_actor_vars):
-		self.sess = sess
-		self.s_dim = state_dim
-		self.a_dim = action_dim
-		self.learning_rate = learning_rate
-		self.tau = tau
-		self.gamma = gamma
+	def __init__(self, sess, state_dim, action_dim, learning_rate, tau, gamma, num_actor_vars, myid):
 
-		# Create the critic network
-		self.inputs, self.action, self.out = self.create_critic_network()
+		with tf.variable_scope("critic"+str(myid)):
+			self.myid = myid
+			self.sess = sess
+			self.s_dim = state_dim
+			self.a_dim = action_dim
+			self.learning_rate = learning_rate
+			self.tau = tau
+			self.gamma = gamma
 
-		self.network_params = tf.trainable_variables()[num_actor_vars:]
+			# Create the critic network
+			self.inputs, self.action, self.out = self.create_critic_network()
 
-		# Target Network
-		self.target_inputs, self.target_action, self.target_out = self.create_critic_network()
+			self.network_params = tf.trainable_variables(scope="critic"+str(myid))[num_actor_vars:]
 
-		self.target_network_params = tf.trainable_variables()[(len(self.network_params) + num_actor_vars):]
+			# Target Network
+			self.target_inputs, self.target_action, self.target_out = self.create_critic_network()
 
-		# Op for periodically updating target network with online network
-		# weights with regularization
-		self.update_target_network_params = \
-			[self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) \
-			+ tf.multiply(self.target_network_params[i], 1. - self.tau))
-				for i in range(len(self.target_network_params))]
+			self.target_network_params = tf.trainable_variables(scope="critic"+str(myid))[(len(self.network_params) + num_actor_vars):]
 
-		# Network target (y_i)
-		self.predicted_q_value = tf.placeholder(tf.float32, [None, 1])
+			# Op for periodically updating target network with online network
+			# weights with regularization
+			self.update_target_network_params = \
+				[self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) \
+				+ tf.multiply(self.target_network_params[i], 1. - self.tau))
+					for i in range(len(self.target_network_params))]
 
-		# Define loss and optimization Op
-		self.loss = tflearn.mean_square(self.predicted_q_value, self.out)
-		self.optimize = tf.train.AdamOptimizer(
-			self.learning_rate).minimize(self.loss)
+			# Network target (y_i)
+			self.predicted_q_value = tf.placeholder(tf.float32, [None, 1])
 
-		# Get the gradient of the net w.r.t. the action.
-		# For each action in the minibatch (i.e., for each x in xs),
-		# this will sum up the gradients of each critic output in the minibatch
-		# w.r.t. that action. Each output is independent of all
-		# actions except for one.
-		self.action_grads = tf.gradients(self.out, self.action)
+			# Define loss and optimization Op
+			self.loss = tflearn.mean_square(self.predicted_q_value, self.out)
+			self.optimize = tf.train.AdamOptimizer(
+				self.learning_rate).minimize(self.loss)
+
+			# Get the gradient of the net w.r.t. the action.
+			# For each action in the minibatch (i.e., for each x in xs),
+			# this will sum up the gradients of each critic output in the minibatch
+			# w.r.t. that action. Each output is independent of all
+			# actions except for one.
+			self.action_grads = tf.gradients(self.out, self.action)
 
 	def create_critic_network(self):
 		inputs = tflearn.input_data(shape=[None, self.s_dim])
@@ -239,18 +249,21 @@ class DdpgUav2(object):
 		self.isMeFound = False
 
 		self.sess = tf.Session()
-		self.seed = 3
+		self.seed = myid
 
-		state_dim = 6
+		""" self pos, def pos, att pos """
+		state_dim = 6 
+		""" direction """
 		action_dim = 1
+		""" todo: change this """
 		action_bound = 2.0
 
 		self.batch_size = 1
 
 		self.actor = ActorNetwork(self.sess, state_dim, action_dim, action_bound,
-					 0.0001, 0.001, self.batch_size)
+					 0.0001, 0.001, self.batch_size,self.myid)
 		self.critic = CriticNetwork(self.sess, state_dim, action_dim, 0.0001,
-									0.0001,0.99,self.actor.get_num_trainable_vars())
+									0.0001,0.99,self.actor.get_num_trainable_vars(),self.myid)
 		self.actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
 
 		self.sess.run(tf.global_variables_initializer())
@@ -371,11 +384,11 @@ class DdpgUav2(object):
 
 # multiple instance does not work? why?
 # why keep sticking to the edge?
+# sess1 = tf.Session()
+# a1 = ActorNetwork(sess1, 6, 1, 2.0 ,0.0001, 0.001, 1)
 
-
-
-
-
+# sess2 = tf.Session()
+# a2 = ActorNetwork(sess2, 6, 1, 2.0 ,0.0001, 0.001, 1)
 
 
 
