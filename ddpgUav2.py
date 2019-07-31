@@ -249,14 +249,14 @@ class DdpgUav2(object):
 		self.isMeFound = False
 
 		self.sess = tf.Session()
-		self.seed = myid
+		self.seed = self.myid * 7
 
 		""" self pos, def pos, att pos """
 		state_dim = 6 
 		""" direction """
 		action_dim = 1
-		""" todo: change this """
-		action_bound = 2.0
+		""" -pi ~ pi """
+		action_bound = np.pi
 
 		self.batch_size = 1
 
@@ -326,6 +326,9 @@ class DdpgUav2(object):
 		self.replay_buffer.add(np.reshape(s, (self.actor.s_dim,)), np.reshape(a, (self.actor.a_dim,)), r,
 							  terminal, np.reshape(s2, (self.actor.s_dim,)))
 
+		""" if episode is too few don't train just observe """
+		if eps < 5:
+			return 42
 		# Keep adding experience to the memory until
 		# there are at least minibatch size samples
 		if self.replay_buffer.size() > 1:

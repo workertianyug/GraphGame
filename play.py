@@ -145,8 +145,8 @@ def main():
 	numUav = 0
 	numUav2 = 2
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	defender = RandDef()
-	# defender = MsgDef(env.g)
+	# defender = RandDef()
+	defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	# uav2s = [RandUav2() for i in range(numUav2)]
