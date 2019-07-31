@@ -268,6 +268,8 @@ class Env(object):
 	numUav:
 	r
 	d
+	x
+	y
 	"""
 	def _parseStateDef(self):
 
@@ -331,6 +333,11 @@ class Env(object):
 		""" should also know the position of every uav """
 		gUav2.graph["uav2Poss"] = self.uav2Poss
 		gUav2.graph["uav2Found"] = self.uav2Found
+		gUav2.graph["defPos"] = self.defPos
+		if self.isFound:
+			gUav2.graph["attPos"] = self.attPos
+		else:
+			gUav2.graph["attPos"] = np.array([0.0,0.0])
 		return gUav2
 
 	def step(self, defAct, attAct, uavActs, uav2Acts):
@@ -362,7 +369,7 @@ class Env(object):
 			 defR = - self.g.nodes[self.attNode]["r"]
 			 attR = self.g.nodes[self.attNode]["r"]
 
-		""" check if uav find an attacker """
+		""" check if uav2 find an attacker """
 		for i in range(0,len(self.uav2Poss)):
 			curUav2Pos = self.uav2Poss[i] 
 			if np.linalg.norm(curUav2Pos - self.attPos) < self.uav2Range:
@@ -383,19 +390,9 @@ class Env(object):
 		             
 		             "uav2State": self._parseStateUav2(),
 		             "uav2R":[0 for i in range(0,self.numUav2)],
-		             "uav2Poss":self.uav2Poss}
+		             "uav2Poss":self.uav2Poss,
+		             "uav2Found":self.uav2Found}
 		return stateDict
-
-
-
-
-# e = Env(getDefaultGraph0)
-
-
-
-
-
-
 
 
 

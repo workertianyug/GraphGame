@@ -7,7 +7,10 @@ from randAtt import *
 from msgDef import *
 from randUav import *
 from randUav2 import *
+from ddpgUav2 import *
 import time
+
+import pickle
 
 """
 the main loop where each player make actions
@@ -26,6 +29,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 	cumDefR = 0.0
 	cumAttR = 0.0
 	catch = 0
+	avgDefUtilList = []
 
 	for eps in range(0, numEpisode):
 		print("episode: %d" % eps)
@@ -55,7 +59,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 			""" TODO: uav2s make move together """
 			uav2Acts = []
 			for i in range(len(uav2s)):
-				uav2Act = uav2s[i].act(None)
+				uav2Act = uav2s[i].act(stateDict["uav2State"])
 				uav2Acts.append(uav2Act)
 			
 			print ("t=%d def act: %s att act:%s uav acts:[%s]" 
@@ -70,6 +74,13 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				           stateDictAfter["defState"],
 				           env.end,eps)
 			stateDict = stateDictAfter
+
+			for i in range(0,len(uav2s)):
+				uav2s[i].train(stateDict["uav2State"],
+							   uav2Acts[i],
+							   0,
+							   stateDictAfter["uav2State"],
+							   env.end, eps)
 
 			""" place to draw the current environment """
 			if (gui):
@@ -93,9 +104,15 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 			if stateDict["defR"] > 0:
 				catch += 1
 
+		avgDefUtilList.append(cumDefR/(eps+1.0))
+
 
 	if gui:
 		plt.close()
+
+	""" save avg def utility for learning curve plot """
+	with open("data/avgDefUtilEps.pkl","w") as f:
+		pickle.dump([avgDefUtilList, numEpisode], f)
 
 	""" compute average defender and attacker utility """
 	avgDefR = cumDefR / numEpisode
@@ -126,14 +143,15 @@ def updateNodeColor(g):
 def main():
 	isGui = True
 	numUav = 0
-	numUav2 = 3
+	numUav2 = 1
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	# defender = RandDef()
-	defender = MsgDef(env.g)
+	defender = RandDef()
+	# defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
-	uav2s = [RandUav2() for i in range(numUav2)]
-	run(env, defender, attacker, uavs, uav2s, 5000, isGui)
+	# uav2s = [RandUav2() for i in range(numUav2)]
+	uav2s = [DdpgUav2(i) for i in range(numUav2)]
+	run(env, defender, attacker, uavs, uav2s, 1000, isGui)
 
 
 
