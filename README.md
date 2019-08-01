@@ -5,7 +5,10 @@ Dependencies:
 tensorflow
 networkx
 numpy
-graph_net
+graph_nets
+tflearn
+matplotlib
+scipy
 
 to run the code
 
