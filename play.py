@@ -143,15 +143,15 @@ def updateNodeColor(g):
 def main():
 	isGui = True
 	numUav = 0
-	numUav2 = 2
+	numUav2 = 3
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	# defender = RandDef()
-	defender = MsgDef(env.g)
+	defender = RandDef()
+	# defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
-	# uav2s = [RandUav2() for i in range(numUav2)]
-	uav2s = [DdpgUav2(i) for i in range(numUav2)]
-	run(env, defender, attacker, uavs, uav2s, 1000, isGui)
+	uav2s = [RandUav2() for i in range(numUav2)]
+	# uav2s = [DdpgUav2(i) for i in range(numUav2)]
+	run(env, defender, attacker, uavs, uav2s, 5000, isGui)
 
 
 
