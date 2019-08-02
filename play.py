@@ -2,12 +2,13 @@ import networkx as nx
 import numpy as np
 
 from env import *
-from randDef import *
-from randAtt import *
+from defenders.randDef import *
+from attackers.heurAtt import *
+from attackers.randAtt import *
 from msgDef import *
-from randUav import *
-from randUav2 import *
-from ddpgUav2 import *
+from defenders.randUav import *
+from defenders.randUav2 import *
+from defenders.ddpgUav2 import *
 import time
 
 import pickle
