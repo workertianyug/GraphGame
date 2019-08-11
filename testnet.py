@@ -165,32 +165,32 @@ train_values = sess.run({
 """
 evaluate but not train
 """
-print("test")
-test_values = sess.run({
-        "outputs": output_ops_tr
-    }, feed_dict={input_ph: input_graphs})
+# print("test")
+# test_values = sess.run({
+#         "outputs": output_ops_tr
+#     }, feed_dict={input_ph: input_graphs})
 
 
 
 
 # take the last one
-print("second test")
+# print("second test")
 
 
-target_graphs = utils_np.networkxs_to_graphs_tuple([t1])
+# target_graphs = utils_np.networkxs_to_graphs_tuple([t1])
 
-feed_dict = {input_ph: input_graphs, target_ph: target_graphs}
-"""
-evaluate but compute loss
-"""
-test_values_2 = sess.run({
-      "target": target_ph,
-      "loss": loss_op_tr,
-      "outputs": output_ops_tr
-  }, feed_dict=feed_dict)
+# feed_dict = {input_ph: input_graphs, target_ph: target_graphs}
+# """
+# evaluate but compute loss
+# """
+# test_values_2 = sess.run({
+#       "target": target_ph,
+#       "loss": loss_op_tr,
+#       "outputs": output_ops_tr
+#   }, feed_dict=feed_dict)
 
 
-outGs = utils_np.graphs_tuple_to_networkxs(test_values["outputs"][-1])
+# outGs = utils_np.graphs_tuple_to_networkxs(test_values["outputs"][-1])
 
 
 

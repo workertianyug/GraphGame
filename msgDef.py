@@ -86,7 +86,7 @@ class MsgDef(object):
 
 	def _create_loss_ops(self,target_op, output_ops):
 		loss_ops = [
-		  tf.losses.softmax_cross_entropy(target_op.edges, output_op.edges)
+		  tf.losses.sigmoid_cross_entropy(target_op.edges, output_op.edges)
 		  for output_op in output_ops
 		]
 		return loss_ops
@@ -114,7 +114,7 @@ class MsgDef(object):
 
 
 		for u, v, features in gtemp.edges(data=True):
-			intmp.add_edge(u, v, features=[0.0]) #TODO: change this to []
+			intmp.add_edge(u, v, features=[1.0]) #TODO: change this to []
 
 		intmp.graph["features"] = [0.0]
 
@@ -136,7 +136,7 @@ class MsgDef(object):
 
 
 		for u, v, features in gtemp.edges(data=True):
-			ttmp.add_edge(u, v, features=[0.0]) # this is q value
+			ttmp.add_edge(u, v, features=[1.0]) # this is q value
 
 		ttmp.graph["features"] = [0.0]
 
@@ -247,13 +247,16 @@ class MsgDef(object):
 					 self.targetPh: utils_np.networkxs_to_graphs_tuple(targets)}
 
 		# apply gradient descent
-		self.sess.run({
-			"step":self.step_op,
-			"target":self.targetPh,
-			"loss":self.loss_op_tr,
-			"outputs":self.output_ops_tr
-			}, feed_dict = feed_dict)
+		train_value = self.sess.run({
+					  "step":self.step_op,
+					  "target":self.targetPh,
+					  "loss":self.loss_op_tr,
+					  "outputs":self.output_ops_tr
+					  }, feed_dict = feed_dict)
 
+		
+		print(train_value["loss"])
+		
 		return 42
 
 

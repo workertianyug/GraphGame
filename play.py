@@ -142,12 +142,12 @@ def updateNodeColor(g):
 	return values
 
 def main():
-	isGui = True
+	isGui = False
 	numUav = 0
-	numUav2 = 3
+	numUav2 = 0
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	defender = RandDef()
-	# defender = MsgDef(env.g)
+	# defender = RandDef()
+	defender = MsgDef(env.g)
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	uav2s = [RandUav2() for i in range(numUav2)]
