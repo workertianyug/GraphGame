@@ -74,7 +74,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				           stateDictAfter["defR"],
 				           stateDictAfter["defState"],
 				           env.end,eps)
-			stateDict = stateDictAfter
+			
 
 			for i in range(0,len(uav2s)):
 				uav2s[i].train(stateDict["uav2State"],
@@ -82,6 +82,8 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 							   0,
 							   stateDictAfter["uav2State"],
 							   env.end, eps)
+
+			stateDict = stateDictAfter
 
 			""" place to draw the current environment """
 			if (gui):
@@ -142,9 +144,9 @@ def updateNodeColor(g):
 	return values
 
 def main():
-	isGui = False
+	isGui = True
 	numUav = 0
-	numUav2 = 0
+	numUav2 = 1
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
 	# defender = RandDef()
 	defender = MsgDef(env.g)

@@ -283,7 +283,8 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 		stateDict = env.resetGame()
 		attacker.reset()
 
-		print(eps)
+		if eps % 100 == 0:
+			print(eps)
 		while(env.end == False):
 
 			""" every agent make move """
@@ -304,8 +305,8 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 			"""
 			attAct_graph, attAct, attEdgeQ = attackerMove(attacker, stateDict)
 
-			print ("t=%d def act: %s att act:%s uav act dir:%s" 
-				% (env.t, str(defAct), str(attAct), str(uav2Act)))
+			# print ("t=%d def act: %s att act:%s uav act dir:%s" 
+			# 	% (env.t, str(defAct), str(attAct), str(uav2Act)))
 			
 
 			""" pass moves to the environment """
@@ -374,7 +375,7 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 
 def main():
 
-	run(env, defender, attacker, uav2, 500, False)
+	run(env, defender, attacker, uav2, 5000, False)
 
 	
 

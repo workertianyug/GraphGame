@@ -314,6 +314,7 @@ class DdpgUav2(object):
 		a = action[0]
 
 		if (not oldIsMeFound) and (newIsMeFound):
+			# fake reward
 			r = 5.0
 		else:
 			r = 0.0

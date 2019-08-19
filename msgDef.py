@@ -98,6 +98,8 @@ class MsgDef(object):
 
 	"""
 	from template graph to example input graph to create placeholder 
+	input: networkx
+	output: networkx
 	"""
 	def _gtmp2intmp(self,gtemp):
 		intmp = gtemp.copy()
@@ -122,6 +124,8 @@ class MsgDef(object):
 
 	"""
 	from template graph to example target graph to create placeholder
+	input: networkx
+	output: networkx
 	"""
 	def _gtmp2ttmp(self,gtemp):
 		ttmp = gtemp.copy()
