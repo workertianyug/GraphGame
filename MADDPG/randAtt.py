@@ -112,7 +112,7 @@ class RandAtt():
 			ttmp.add_node(nodeIndex, features=[])
 			
 		for nodeIndex, nodeFeature in ttmp.nodes(data=True):
-			for attr in nodeFeature.keys():
+			for attr in list(nodeFeature):
 				if attr != "features":
 					del nodeFeature[attr]
 
