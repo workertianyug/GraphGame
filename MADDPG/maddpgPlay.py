@@ -347,7 +347,7 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 			if stateDict["defR"] > 0:
 				catch += 1
 
-			avgDefUtilList.append(cumDefR/(eps+1.0))
+		avgDefUtilList.append(cumDefR/(eps+1.0))
 
 	with open("data/avgDefUtilEps.pkl","wb") as f:
 		pickle.dump([avgDefUtilList, numEpisode], f)

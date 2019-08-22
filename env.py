@@ -276,6 +276,13 @@ class Env(object):
 		gDef = self.g.copy()
 		if not self.isFound:
 			gDef.nodes[self.attNode]["isAtt"] = 0
+
+		gDef.graph["isFound"] = self.isFound
+		if self.isFound:
+			gDef.graph["attNode"] = self.attNode
+		else:
+			gDef.graph["attNode"] = -1
+
 		return gDef
 
 	""" 
@@ -357,6 +364,12 @@ class Env(object):
 
 		""" check if def att in the same cell """
 		if self.defNode == self.attNode:
+			self.end = True
+			defR = self.g.graph["utilDefC"]
+			attR = self.g.graph["utilAttC"]
+
+		""" check if def att going towards each other """
+		if (defAct == (attAct[1],attAct[0])):
 			self.end = True
 			defR = self.g.graph["utilDefC"]
 			attR = self.g.graph["utilAttC"]
