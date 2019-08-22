@@ -9,6 +9,7 @@ from msgDef import *
 from defenders.randUav import *
 from defenders.randUav2 import *
 from defenders.ddpgUav2 import *
+from defenders.paramRandDef import *
 import time
 
 import pickle
@@ -33,7 +34,7 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 	avgDefUtilList = []
 
 	for eps in range(0, numEpisode):
-		print("episode: %d" % eps)
+		# print("episode: %d" % eps)
 		stateDict = env.resetGame()
 		attacker.reset()
 
@@ -45,6 +46,9 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 			plt.show(block=False)
 			plt.pause(1)
 			plt.clf()
+
+		if eps % 100 == 0:
+			print eps
 				
 		while(env.end == False):
 			""" defender make move """
@@ -63,8 +67,8 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 				uav2Act = uav2s[i].act(stateDict["uav2State"])
 				uav2Acts.append(uav2Act)
 			
-			print ("t=%d def act: %s att act:%s uav acts:[%s]" 
-				% (env.t, str(defAct), str(attAct), str(uav2Acts)))
+			# print ("t=%d def act: %s att act:%s uav acts:[%s]" 
+			# 	% (env.t, str(defAct), str(attAct), str(uav2Acts)))
 			
 			stateDictAfter = env.step(defAct, attAct,uavActs,uav2Acts)
 
@@ -149,7 +153,8 @@ def main():
 	numUav2 = 1
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
 	# defender = RandDef()
-	defender = MsgDef(env.g)
+	# defender = MsgDef(env.g)
+	defender = ParamRandDef()
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	uav2s = [RandUav2() for i in range(numUav2)]

@@ -259,7 +259,7 @@ class MsgDef(object):
 					  }, feed_dict = feed_dict)
 
 		
-		print(train_value["loss"])
+		# print(train_value["loss"])
 		
 		return 42
 
