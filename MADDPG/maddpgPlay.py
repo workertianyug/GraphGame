@@ -132,9 +132,9 @@ eps: current episode number
 note: currently does not support batch training
 can only sample 1 at a time
 """
-def trainDefender(defender, defender_target, D,
- oldState, defActEdge, attActEdge, uav2Act, reward, newState, terminal, eps,
- sess, actorTargetUpOp, criticTargetUpOp):
+def trainDefender(defender, defender_target, D, oldState, defActEdge, attActEdge, 
+uav2Act, reward, newState, terminal, eps, 
+sess, actorTargetUpOp, criticTargetUpOp):
 
 
 	D.append((oldState,defActEdge,attActEdge,uav2Act,reward,newState,terminal))
@@ -349,7 +349,7 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 
 			avgDefUtilList.append(cumDefR/(eps+1.0))
 
-	with open("data/avgDefUtilEps.pkl","w") as f:
+	with open("data/avgDefUtilEps.pkl","wb") as f:
 		pickle.dump([avgDefUtilList, numEpisode], f)
 
 	""" compute average defender and attacker utility """
