@@ -148,7 +148,7 @@ def updateNodeColor(g):
 	return values
 
 def main():
-	isGui = True
+	isGui = False
 	numUav = 0
 	numUav2 = 1
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
