@@ -41,7 +41,7 @@ def _gtmp2intmp(gtemp):
 					   features=_create_feature(nodeFeature, inNodeFields))
 		
 	for nodeIndex, nodeFeature in intmp.nodes(data=True):
-		for attr in nodeFeature.keys():
+		for attr in list(nodeFeature):
 			if attr != "features":
 				del nodeFeature[attr]
 
