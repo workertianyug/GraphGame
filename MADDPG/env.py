@@ -118,65 +118,6 @@ def getGridGraphNxN(n):
 	return g, pos
 
 
-# not fully implemented -- unsure of what to do about action space 
-def getDefaultGraph10x10():
-	g = nx.DiGraph()
-	random.seed(10)
-
-	num_zero_reward_nodes = random.randint(0,99)
-	num_low_reward_nodes = random.randint(0,99)
-	num_high_reward_nodes = random.randint(0,99)
-	num_additional_edges = random.randint(0,49)
-
-	for i in range(0,100):
-		if i in np.random.randint(0, 99, size=(1,num_high_reward_nodes)):
-			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=3.0, d=3, ctr=0)
-		# also need to test that node isn't already in graph
-		elif i in np.random.randint(0, 99, size=(1,num_low_reward_nodes)):
-			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
-		else:
-			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
-
-		g.add_edge(i,i)
-
-	for i in range(0, num_additional_edges):
-		g.add_edge(i, random.randint(0,99))
-
-	g.graph["utilDefC"] = 2.0
-	g.graph["utilAttC"] = -2.0
-
-	pos = dict()
-	pos[0] = np.array([0.0,4.0])
-	pos[1] = np.array([1.0,4.0])
-	pos[2] = np.array([2.0,4.0])
-	pos[3] = np.array([3.0,4.0])
-	pos[4] = np.array([4.0,4.0])
-	pos[5] = np.array([0.0,3.0])
-	pos[6] = np.array([1.0,3.0])
-	pos[7] = np.array([2.0,3.0])
-	pos[8] = np.array([3.0,3.0])
-	pos[9] = np.array([4.0,3.0])
-	pos[10] = np.array([0.0,2.0])
-	pos[11] = np.array([1.0,2.0])
-	pos[12] = np.array([2.0,2.0])
-	pos[13] = np.array([3.0,2.0])
-	pos[14] = np.array([4.0,2.0])
-	pos[15] = np.array([0.0,1.0])
-	pos[16] = np.array([1.0,1.0])
-	pos[17] = np.array([2.0,1.0])
-	pos[18] = np.array([3.0,1.0])
-	pos[19] = np.array([4.0,1.0])
-	pos[20] = np.array([0.0,0.0])
-	pos[21] = np.array([1.0,0.0])
-	pos[22] = np.array([2.0,0.0])
-	pos[23] = np.array([3.0,0.0])
-	pos[24] = np.array([4.0,0.0])
-
-	for i in range(0,100):
-		g.node[i]["x"] = pos[i][0]
-		g.node[i]["y"] = pos[i][1]
-	return g,pos
-
 """
 The simulation environment
 """

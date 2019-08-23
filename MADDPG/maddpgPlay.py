@@ -310,10 +310,8 @@ isGui = False
 numUav = 0
 numUav2 = 1
 n = 5
-print("calling env creator")
 env = Env(getGridGraphNxN(n), numUav, numUav2)
 #env = Env(getDefaultGraph5x5, numUav, numUav2)
-print("exiting env creator")
 
 #g,_ = getDefaultGraph5x5()
 g,_ = getGridGraphNxN(n)
