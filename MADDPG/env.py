@@ -110,6 +110,8 @@ def getGridGraphNxN(n):
 	for i in range(n, -1, -1):
 		for j in range(0, n):
 			pos[idx] = np.array([float(j), float(i)])
+			idx += 1
+
 
 	for i in range(0, n*n):
 		g.node[i]["x"] = pos[i][0]
