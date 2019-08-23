@@ -112,11 +112,10 @@ def getGridGraphNxN(n):
 			pos[idx] = np.array([float(j), float(i)])
 			idx += 1
 
-
 	for i in range(0, n*n):
 		g.node[i]["x"] = pos[i][0]
 		g.node[i]["y"] = pos[i][1]
-	return g,pos
+	return g, pos
 
 
 # not fully implemented -- unsure of what to do about action space 
@@ -187,7 +186,8 @@ class Env(object):
 
 		""" game information """
 		self.gfn = gfn
-		self.g, self.pos = gfn()
+		print(gfn)
+		self.g, self.pos = gfn
 		self.end = False
 		self.t = 0
 		self.minX, self.maxX, self.minY, self.maxY = self._getBoundary(self.pos)
@@ -220,7 +220,7 @@ class Env(object):
 	def resetGame(self):
 		""" game information """
 		self.end = False
-		self.g, self.pos = self.gfn()
+		self.g, self.pos = self.gfn
 		self.t = 0
 		self.maxT = 100
 		# initial locations will be randomized in the future
