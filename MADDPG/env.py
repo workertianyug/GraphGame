@@ -25,9 +25,9 @@ def getDefaultGraph5x5():
 
 	for i in range(0,25):
 		if i == 12:
-			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=3.0, d=3, ctr=0)
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=50.0, d=3, ctr=0)
 		elif i in [6,7,8,11,13,16,17,18]:
-			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=10.0, d=2, ctr=0)
 		else:
 			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
 
@@ -126,9 +126,9 @@ class Env(object):
 	def __init__(self, gfn, numUav, numUav2, uav2Range=1.0):
 
 		""" game information """
-		self.gfn = gfn
+		self.gfn = gfn()
 		print(gfn)
-		self.g, self.pos = gfn
+		self.g, self.pos = gfn()
 		self.end = False
 		self.t = 0
 		self.minX, self.maxX, self.minY, self.maxY = self._getBoundary(self.pos)
@@ -166,11 +166,18 @@ class Env(object):
 		self.maxT = 100
 		# initial locations will be randomized in the future
 		""" def state """
-		self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
-		self.defNode = 12
-		self.defPos = self.pos[12]
+		d = random.randint(0, self.g.number_of_nodes() - 1)
+		self.g.nodes[d]
+		#self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
+		self.g.nodes[d]["isDef"] = 1
+		self.defNode = d
+		# self.defNode = 12
+		#self.defPos = self.pos[12]
+		self.defPos = self.pos[d]
 		""" att state """
-		attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
+		# making it so that attacker can start from anywhere, but probably want to restrict to the edge in future
+	#	attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
+		attNode = random.randint(0, self.g.number_of_nodes() - 1)
 		self.g.nodes[attNode]["isAtt"] = 1
 		self.attNode = attNode
 		self.attPos = self.pos[attNode]
@@ -180,7 +187,8 @@ class Env(object):
 		self.uavNodes=[0 for i in range(self.numUav)]
 		self.uavPoss = [self.pos[0] for i in range(self.numUav)]
 		""" uav2 state """
-		self.uav2Poss = [self.pos[12] for i in range(self.numUav2)]
+		uavNode = random.randint(0, self.g.number_of_nodes() - 1)
+		self.uav2Poss = [self.pos[uavNode] for i in range(self.numUav2)]
 		self.uav2Found = [False for i in range(self.numUav2)]
 
 		# TODO: add in uav2 state information
