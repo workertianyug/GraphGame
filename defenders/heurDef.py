@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 from env import *
 
-class HeurAtt(object):
+class HeurDef(object):
     def __init__(self):
         self.seed = 17
         self.rand = np.random.RandomState(seed=self.seed)
