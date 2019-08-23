@@ -12,6 +12,7 @@ import time
 import pickle
 
 
+TAU = 0.01
 
 def create_init_update(oneline_name, target_name, tau=0.99):
 	online_var = [i for i in tf.trainable_variables() if oneline_name in i.name]
@@ -83,6 +84,79 @@ def defenderMove(defender, stateDict, sess):
 	cur_act = max(qdict, key=qdict.get)
 
 	return outg, allEdgeQ, cur_act
+
+
+"""
+use gumbel trick to sample discrete actions and give its continuous representation
+
+cur_act: (u,v) this is what env would read as action
+
+allEdgeQ: this is the vector representation of the cont action after gumbel trick
+"""
+def defenderMove2(defender, stateDict, sess):
+	defState = stateDict["defState"]
+	defNode = stateDict["defNode"]
+
+	gin = _gtmp2intmp(defState)
+
+	state = utils_np.networkxs_to_graphs_tuple([gin])
+
+	actDict = defender.action(state,sess)
+
+	graphTupleOut,_ = actDict["graph"], actDict["edge"]
+
+	outg = utils_np.graphs_tuple_to_networkxs(graphTupleOut[-1])[0]
+
+	outg = nx.DiGraph(outg)
+
+	# make the discrete action
+
+	validActions = list(defState.out_edges([defNode]))
+	qdict = dict()
+
+	for e in validActions:
+		qdict[e] = outg.get_edge_data(*e)["features"][0]
+
+	cur_act = max(qdict, key=qdict.get)
+
+	# generate continuous representation of the discrete action
+	# set edges of invalid actions to negative infinity, take soft max
+	for e in outg.edges:
+		if e[0] != defNode:
+			outg.add_edge(*e, features=[-100.0])
+
+	# extract "q values" to a vector
+	allEdgeQ = []
+	for e in outg.edges:
+		allEdgeQ.append(outg.get_edge_data(*e)["features"][0])
+
+	allEdgeQ = np.array(allEdgeQ)
+
+	# first take softmax to generate valid logits
+	# warning: sometimes this would cause overflow 
+	allEdgeQ = np.exp(allEdgeQ) / sum(np.exp(allEdgeQ))
+
+	# take log probabilities
+	allEdgeQ = np.log(allEdgeQ)
+
+	# add gumbel samples
+	gumbelSample = np.random.gumbel(size=len(allEdgeQ))
+	allEdgeQ = allEdgeQ + gumbelSample
+
+	allEdgeQ = allEdgeQ / TAU
+
+	# take softmax
+	allEdgeQ = np.exp(allEdgeQ) / sum(np.exp(allEdgeQ))
+
+	allEdgeQ = np.reshape(allEdgeQ,[1,len(allEdgeQ)])
+
+	return outg, allEdgeQ, cur_act
+
+
+
+
+
+
 
 
 def stateDictToUav2State(stateDict):
@@ -293,7 +367,7 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 			defEdgeQ: matrix of shape [1,N_edges] containing vector form of edges
 			defAct: (u,v) containing the actual move of defender
 			"""
-			defOutG, defEdgeQ, defAct = defenderMove(defender, stateDict, sess)
+			defOutG, defEdgeQ, defAct = defenderMove2(defender, stateDict, sess)
 			"""
 			uav2Act: here uav2Act is a scalar representting the direction of uav
 			speed is hard coded as 1.0
@@ -323,11 +397,6 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 				sess, defender_actor_target_update, defender_critic_target_update)
 
 			""" train uav2 """
-
-			# def trainUav2(uav2, uav2_target, D,
-			#  oldState, defActEdge, attActEdge, uav2Act, reward, newState,terminal, eps, sess, 
-			#  actorTargetUpOp, criticTargetUpOp,
-			#  oldFound, newFound):
 
 			uav2OldState = stateDictToUav2State(stateDict)
 			uav2NewState = stateDictToUav2State(stateDictAfter)

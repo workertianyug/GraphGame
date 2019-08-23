@@ -6,6 +6,7 @@ import numpy as np
 
 import random
 
+TAU = 0.01
 
 def getDefaultGraph5x5():
 	g = nx.DiGraph()
@@ -117,10 +118,10 @@ class RandAtt():
 					del nodeFeature[attr]
 
 		for u, v, features in attState.edges(data=True):
-			q_val = np.random.uniform(-1,1,1)[0]
+			q_val = np.random.uniform(-30,30,1)[0]
 			ttmp.add_edge(u, v, features=[q_val]) # this is q value
 
-
+		# Q: why need this?
 		ttmp.graph["features"] = [0.0]
 
 		""" now select valid action """
@@ -135,10 +136,30 @@ class RandAtt():
 
 
 		""" from ttmp, compute the vector containing all values """
+		""" applying the gumbel trick """
+		for e in ttmp.edges:
+			if e[0] != attNode:
+				ttmp.add_edge(*e, features=[-100.0])
+
+
 		edgeQvec = []
 		N_edges = len(ttmp.edges)
 		for e in ttmp.edges:
 			edgeQvec.append(ttmp.get_edge_data(*e)["features"][0])
+
+
+		edgeQvec = np.array(edgeQvec)
+
+		edgeQvec = np.exp(edgeQvec) / sum(np.exp(edgeQvec))
+
+		edgeQvec = np.log(edgeQvec)
+
+		gumbelSample = np.random.gumbel(size=len(edgeQvec))
+		edgeQvec = edgeQvec + gumbelSample
+
+		edgeQvec = edgeQvec / TAU
+
+		edgeQvec = np.exp(edgeQvec) / sum(np.exp(edgeQvec))
 
 		edgeQvec = np.reshape(edgeQvec,[1,N_edges])
 
