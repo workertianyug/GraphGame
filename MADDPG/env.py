@@ -79,6 +79,43 @@ def getDefaultGraph5x5():
 		g.node[i]["y"] = pos[i][1]
 	return g,pos
 
+def getGridGraphNxN(n):
+	g = nx.DiGraph()
+	random.seed(10)
+
+	low_reward_nodes = np.random.randint(0, n*n - 1, size=(1, random.randint(0, n*n-1)))
+	high_reward_nodes = np.random.randint(0, n*n - 1, size=(1, random.randint(0, n*n-1)))
+	
+	for i in range(0, n*n):
+		if i in high_reward_nodes:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=3.0, d=3, ctr=0)
+		elif i in low_reward_nodes and i not in high_reward_nodes:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i, i)
+		if i % (n - 1) != 0:
+			g.add_edge(i, i + 1)
+		if i < (n * n - n):
+			g.add_edge(i, i + n)
+		if i >= n:
+			g.add_edge(i, i - n)
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	pos = dict()
+	# for each possible n*n position,
+	# assign each position to [0.0, 4.0], then [1.0, 4.0], and so on...
+
+	for i in range(0, n*n):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
+	return g,pos
+
+
+# not fully implemented -- unsure of what to do about action space 
 def getDefaultGraph10x10():
 	g = nx.DiGraph()
 	random.seed(10)
@@ -89,9 +126,10 @@ def getDefaultGraph10x10():
 	num_additional_edges = random.randint(0,49)
 
 	for i in range(0,100):
-		if i in np.random.randint(0, 5, size=(1,num_high_reward_nodes)):
+		if i in np.random.randint(0, 99, size=(1,num_high_reward_nodes)):
 			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=3.0, d=3, ctr=0)
-		elif i in np.random.randint(0, 5, size=(1,num_low_reward_nodes)):
+		# also need to test that node isn't already in graph
+		elif i in np.random.randint(0, 99, size=(1,num_low_reward_nodes)):
 			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=1.0, d=2, ctr=0)
 		else:
 			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
