@@ -126,7 +126,7 @@ class Env(object):
 	def __init__(self, gfn, numUav, numUav2, uav2Range=1.0):
 
 		""" game information """
-		self.gfn = gfn()
+		self.gfn = gfn
 		print(gfn)
 		self.g, self.pos = gfn()
 		self.end = False
@@ -161,7 +161,7 @@ class Env(object):
 	def resetGame(self):
 		""" game information """
 		self.end = False
-		self.g, self.pos = self.gfn
+		self.g, self.pos = self.gfn()
 		self.t = 0
 		self.maxT = 100
 		# initial locations will be randomized in the future

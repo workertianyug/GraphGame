@@ -28,10 +28,8 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 		pos = env.pos
 
 	""" initialize reward tracking """
-	cumDefR = 0.0
-	cumAttR = 0.0
 	catch = 0
-	avgDefUtilList = []
+	defUtilList = []
 
 	for eps in range(0, numEpisode):
 		# print("episode: %d" % eps)
@@ -106,27 +104,25 @@ def run(env, defender, attacker, uavs, uav2s, numEpisode,gui):
 
 			""" place to increase cumulative defender and attacker utility """
 			# print (stateDict["defR"], stateDict["attR"])
-			cumDefR += stateDict["defR"]
-			cumAttR += stateDict["attR"]
+			
 			if stateDict["defR"] > 0:
 				catch += 1
 
-		avgDefUtilList.append(cumDefR/(eps+1.0))
+		defUtilList.append(stateDict["defR"])
 
 
 	if gui:
 		plt.close()
 
 	""" save avg def utility for learning curve plot """
-	with open("data/avgDefUtilEps.pkl","w") as f:
-		pickle.dump([avgDefUtilList, numEpisode], f)
+	with open("data/defUtilEps.pkl","w") as f:
+		pickle.dump([defUtilList, numEpisode], f)
 
 	""" compute average defender and attacker utility """
-	avgDefR = cumDefR / numEpisode
-	avgAttR = cumAttR / numEpisode 
+	avgDefR = sum(defUtilList) / numEpisode
+	avgAttR = - sum(defUtilList) / numEpisode 
 
-	print(cumDefR,cumAttR,catch)
-
+	
 	print ("numEpisode=%d avgDefR=%s avgAttR=%s" 
 		% (numEpisode, str(avgDefR), str(avgAttR)))
 
@@ -152,9 +148,9 @@ def main():
 	numUav = 0
 	numUav2 = 1
 	env = Env(getDefaultGraph5x5,numUav,numUav2)
-	# defender = RandDef()
+	defender = RandDef()
 	# defender = MsgDef(env.g)
-	defender = ParamRandDef()
+	# defender = ParamRandDef()
 	attacker = RandAtt() 
 	uavs = [RandUav() for i in range(numUav)]
 	uav2s = [RandUav2() for i in range(numUav2)]

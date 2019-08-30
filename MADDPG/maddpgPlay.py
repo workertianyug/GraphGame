@@ -310,11 +310,11 @@ isGui = False
 numUav = 0
 numUav2 = 1
 n = 5
-env = Env(getGridGraphNxN(n), numUav, numUav2)
-#env = Env(getDefaultGraph5x5, numUav, numUav2)
+# env = Env(getGridGraphNxN(n), numUav, numUav2)
+env = Env(getDefaultGraph5x5, numUav, numUav2)
 
-#g,_ = getDefaultGraph5x5()
-g,_ = getGridGraphNxN(n)
+g,_ = getDefaultGraph5x5()
+# g,_ = getGridGraphNxN(n)
 
 """ initialize players """
 defender = MaddpgDef("def",g)
