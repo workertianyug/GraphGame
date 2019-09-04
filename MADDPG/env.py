@@ -201,7 +201,6 @@ def getGridGraph1x1():
 
 		g.add_edge(i,i)
 
-
 	g.graph["utilDefC"] = 2.0
 	g.graph["utilAttC"] = -2.0
 
@@ -450,7 +449,6 @@ class Env(object):
 	y
 	"""
 	def _parseStateDef(self):
-
 		gDef = self.g.copy()
 		if not self.isFound:
 			gDef.nodes[self.attNode]["isAtt"] = 0
@@ -468,7 +466,6 @@ class Env(object):
 	"""
 	#TODO: update isFound
 	def _parseStateAtt(self):
-
 		gAtt = self.g.copy()
 		for i in gAtt.nodes:
 			del gAtt.nodes[i]["isDef"]
@@ -480,7 +477,6 @@ class Env(object):
 	deprecated: uav will not be used
 	"""
 	def _parseStateUav(self):
-
 		gUav = self.g.copy()
 		for i in gUav.nodes:
 			if gUav.nodes[i]["isAtt"] == 1 and gUav.nodes[i]["numUav"] == 0:
@@ -501,7 +497,6 @@ class Env(object):
 		uav2Found
 	"""
 	def _parseStateUav2(self):
-
 		gUav2 = self.g.copy()
 		""" no information abut ctr """
 		for i in gUav2.nodes:
@@ -519,7 +514,6 @@ class Env(object):
 		return gUav2
 
 	def step(self, defAct, attAct, uavActs, uav2Acts):
-		
 		self._defMove(defAct)
 		self._attMove(attAct)
 		self._uavMoves(uavActs)
@@ -574,42 +568,3 @@ class Env(object):
 		             "uav2Poss":self.uav2Poss,
 		             "uav2Found":self.uav2Found}
 		return stateDict
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
