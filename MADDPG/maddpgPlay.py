@@ -55,8 +55,6 @@ def _gtmp2intmp(gtemp):
 	return intmp
 
 
-
-
 def defenderMove(defender, stateDict, sess):
 	defState = stateDict["defState"]
 	defNode = stateDict["defNode"]
@@ -135,7 +133,6 @@ def defenderMove2(defender, stateDict, sess):
 	# add gumbel samples
 	gumbelSample = np.random.gumbel(size=len(allEdgeQ))
 	allEdgeQ = allEdgeQ + gumbelSample
-
 	allEdgeQ = allEdgeQ / TAU
 
 	# take softmax
@@ -144,21 +141,17 @@ def defenderMove2(defender, stateDict, sess):
 
 	return outg, allEdgeQ, cur_act
 
+
 def stateDictToUav2State(stateDict):
 	myPos = stateDict["uav2State"].graph["uav2Poss"][0]
 	defPos = stateDict["uav2State"].graph["defPos"]
 	attPos = stateDict["uav2State"].graph["attPos"]
-
 	state = np.concatenate([myPos,defPos,attPos])
-
 	state = np.reshape(state,[1,6])
-
 	return state
 
 
-
 def uav2Move(uav2, stateDict, sess):
-
 	myPos = stateDict["uav2State"].graph["uav2Poss"][0]
 	defPos = stateDict["uav2State"].graph["defPos"]
 	attPos = stateDict["uav2State"].graph["attPos"]
@@ -171,6 +164,7 @@ def uav2Move(uav2, stateDict, sess):
 	print("Feature after concatenation is", feature)
 	uav2Act = uav2.action(feature,sess)
 	return uav2Act["direc"]
+
 
 def attackerMove(attacker, stateDict):
 	cur_q_graph,edge,edgeQvec = attacker.action(stateDict["attState"],stateDict["attNode"])
@@ -193,7 +187,6 @@ can only sample 1 at a time
 def trainDefender(defender, defender_target, D, oldState, defActEdge, attActEdge, 
 uav2Act, reward, newState, terminal, eps, 
 sess, actorTargetUpOp, criticTargetUpOp):
-
 	D.append((oldState,defActEdge,attActEdge,uav2Act,reward,newState,terminal))
 
 	if (eps < 5):
@@ -322,7 +315,6 @@ def trainAttacker(attacker, attacker_target, D, oldState, attActEdge, defActEdge
 
 
 isGui = True
-
 numUav = 0
 numUav2 = 1
 n = 5
@@ -343,9 +335,9 @@ defender_target = MaddpgDef("def_target",g)
 uav2 = MaddpgUav2("uav2",g)
 uav2_target = MaddpgUav2("uav2_target",g)
 
-#attacker = RandAtt(g)
-attacker = MaddpgDef("att", g)
-attacker_target = MaddpgDef("att_target", g)
+attacker = RandAtt(g)
+#attacker = MaddpgDef("att", g)
+#attacker_target = MaddpgDef("att_target", g)
 
 """ initialize update operations """
 defender_actor_target_init, defender_actor_target_update = create_init_update('def_actor','def_target_actor')
@@ -361,7 +353,6 @@ attacker_critic_target_init, attacker_critic_target_update = create_init_update(
 defender_D = list()
 uav2_D = list()
 attacker_D = list()
-
 
 
 """ only support one single uav2 now """
@@ -468,19 +459,9 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 	return 42
 
 
-
-
-
-
-
-
-
-
 def main():
 
 	run(env, defender, attacker, uav2, 15, False)
-
-	
 
 
 if __name__ == '__main__':
