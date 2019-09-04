@@ -260,7 +260,7 @@ class Env(object):
 	def __init__(self, gfn, numUav, numUav2, uav2Range=1.0):
 
 		""" game information """
-		self.gfn = gfn()
+		self.gfn = gfn
 		print(gfn)
 		self.g, self.pos = gfn()
 		self.end = False
