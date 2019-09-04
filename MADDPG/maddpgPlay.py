@@ -58,20 +58,15 @@ def _gtmp2intmp(gtemp):
 
 
 def defenderMove(defender, stateDict, sess):
-
 	defState = stateDict["defState"]
 	defNode = stateDict["defNode"]
 
 	gin = _gtmp2intmp(defState)
-
 	state = utils_np.networkxs_to_graphs_tuple([gin])
-
 	actDict = defender.action(state,sess)
-
 	graphTupleOut,allEdgeQ = actDict["graph"], actDict["edge"]
 
 	outg = utils_np.graphs_tuple_to_networkxs(graphTupleOut[-1])[0]
-
 	outg = nx.DiGraph(outg)
 
 	validActions = list(defState.out_edges([defNode]))
@@ -79,7 +74,6 @@ def defenderMove(defender, stateDict, sess):
 
 	for e in validActions:
 		qdict[e] = outg.get_edge_data(*e)["features"][0]
-
 
 	cur_act = max(qdict, key=qdict.get)
 
@@ -98,32 +92,31 @@ def defenderMove2(defender, stateDict, sess):
 	defNode = stateDict["defNode"]
 
 	gin = _gtmp2intmp(defState)
-
 	state = utils_np.networkxs_to_graphs_tuple([gin])
 
 	actDict = defender.action(state,sess)
-
 	graphTupleOut,_ = actDict["graph"], actDict["edge"]
 
 	outg = utils_np.graphs_tuple_to_networkxs(graphTupleOut[-1])[0]
-
 	outg = nx.DiGraph(outg)
 
 	# make the discrete action
-
 	validActions = list(defState.out_edges([defNode]))
+	print("Valid actions are", validActions)
 	qdict = dict()
 
 	for e in validActions:
 		qdict[e] = outg.get_edge_data(*e)["features"][0]
+		print("Value of action", e, "is", qdict[e])
 
 	cur_act = max(qdict, key=qdict.get)
+	print("Current action is ", cur_act)
 
 	# generate continuous representation of the discrete action
 	# set edges of invalid actions to negative infinity, take soft max
-	for e in outg.edges:
-		if e[0] != defNode:
-			outg.add_edge(*e, features=[-100.0])
+	#for e in outg.edges:
+	#	if e[0] != defNode:
+	#		outg.add_edge(*e, features=[-100.0])
 
 	# extract "q values" to a vector
 	allEdgeQ = []
@@ -131,7 +124,7 @@ def defenderMove2(defender, stateDict, sess):
 		allEdgeQ.append(outg.get_edge_data(*e)["features"][0])
 
 	allEdgeQ = np.array(allEdgeQ)
-
+	print("All edge Q is ", allEdgeQ)
 	# first take softmax to generate valid logits
 	# warning: sometimes this would cause overflow 
 	allEdgeQ = np.exp(allEdgeQ) / sum(np.exp(allEdgeQ))
@@ -147,17 +140,9 @@ def defenderMove2(defender, stateDict, sess):
 
 	# take softmax
 	allEdgeQ = np.exp(allEdgeQ) / sum(np.exp(allEdgeQ))
-
 	allEdgeQ = np.reshape(allEdgeQ,[1,len(allEdgeQ)])
 
 	return outg, allEdgeQ, cur_act
-
-
-
-
-
-
-
 
 def stateDictToUav2State(stateDict):
 	myPos = stateDict["uav2State"].graph["uav2Poss"][0]
@@ -178,18 +163,17 @@ def uav2Move(uav2, stateDict, sess):
 	defPos = stateDict["uav2State"].graph["defPos"]
 	attPos = stateDict["uav2State"].graph["attPos"]
 
-	feature = np.concatenate([myPos,defPos,attPos])
+	print("Uav position is currently", myPos)
 
+	feature = np.concatenate([myPos,defPos,attPos])
 	feature = np.reshape(feature,[1,6])
 
+	print("Feature after concatenation is", feature)
 	uav2Act = uav2.action(feature,sess)
-
 	return uav2Act["direc"]
 
 def attackerMove(attacker, stateDict):
-
 	cur_q_graph,edge,edgeQvec = attacker.action(stateDict["attState"],stateDict["attNode"])
-
 	return cur_q_graph, edge, edgeQvec
 
 
@@ -210,7 +194,6 @@ def trainDefender(defender, defender_target, D, oldState, defActEdge, attActEdge
 uav2Act, reward, newState, terminal, eps, 
 sess, actorTargetUpOp, criticTargetUpOp):
 
-
 	D.append((oldState,defActEdge,attActEdge,uav2Act,reward,newState,terminal))
 
 	if (eps < 5):
@@ -229,12 +212,12 @@ sess, actorTargetUpOp, criticTargetUpOp):
 
 	if term == False:
 		b_nxt = D[i+1]
-		target = r + 0.9 * defender_target.Q(b_nxt[0],b_nxt[1], b_nxt[2], b_nxt[3],sess)[0][0]
+		target = r + 0.99 * defender_target.Q(b_nxt[0],b_nxt[1], b_nxt[2], b_nxt[3],sess)[0][0]
 	else:
 		target = r
 
-	defender.train_actor(s0, attActEdge, uav2Act,sess)
-	defender.train_critic(s0, defActEdge, attActEdge, uav2Act,[[target]],sess)
+	defender.train_actor(s0, attActEdge, uav2Act, sess)
+	defender.train_critic(s0, defActEdge, attActEdge, uav2Act, [[target]], sess)
 
 	""" now update target network """
 	sess.run([actorTargetUpOp,criticTargetUpOp])
@@ -270,6 +253,7 @@ def trainUav2(uav2, uav2_target, D,
 		reward = 0.0
 
 	if (oldFound) and (newFound):
+		print("Old found and new found")
 		return 42
 
 	D.append((oldState,defActEdge,attActEdge,uav2Act,reward,newState,terminal))
@@ -277,6 +261,7 @@ def trainUav2(uav2, uav2_target, D,
 	if (eps < 5):
 		return 42
 
+	# Do replay buffer sampling.
 	i = random.randint(0,len(D)-2)
 	b_cur = D[i]
 
@@ -290,7 +275,7 @@ def trainUav2(uav2, uav2_target, D,
 
 	if term == False:
 		b_nxt = D[i+1]
-		target = r + 0.9 * uav2_target.Q(b_nxt[0],b_nxt[1], b_nxt[2], b_nxt[3],sess)[0][0]
+		target = r + 0.99 * uav2_target.Q(b_nxt[0],b_nxt[1], b_nxt[2], b_nxt[3],sess)[0][0]
 	else:
 		target = r
 
@@ -302,19 +287,54 @@ def trainUav2(uav2, uav2_target, D,
 	return 42
 
 
+def trainAttacker(attacker, attacker_target, D, oldState, attActEdge, defActEdge, uav2Act, 
+				  reward, newState, terminal, eps, sess, actorTargetUpOp, criticTargetUpOp):
+
+	D.append((oldState, attActEdge, defActEdge, uav2Act, reward, newState, terminal))
+
+	if (eps < 5):
+		return 42
+
+	i = random.randint(0,len(D)-2)
+	b_cur = D[i]
+
+	s0 = b_cur[0]
+	attActEdge = b_cur[1]
+	defActEdge = b_cur[2]
+	uav2Act = b_cur[3]
+	r = b_cur[4]
+	s1 = b_cur[5]
+	term = b_cur[6]
+
+	if term == False:
+		b_nxt = D[i+1]
+		target = r + 0.99 * attacker_target.Q(b_nxt[0],b_nxt[1], b_nxt[2], b_nxt[3],sess)[0][0]
+	else:
+		target = r
+
+	attacker.train_actor(s0, defActEdge, uav2Act, sess)
+	attacker.train_critic(s0, attActEdge, defActEdge, uav2Act, [[target]], sess)
+
+	""" now update target network """
+	sess.run([actorTargetUpOp, criticTargetUpOp])
+
+	return 42
 
 
-
-isGui = False
+isGui = True
 
 numUav = 0
 numUav2 = 1
 n = 5
-env = Env(getGridGraphNxN(n), numUav, numUav2)
+#env = Env(getGridGraphNxN(n), numUav, numUav2)
 #env = Env(getDefaultGraph5x5, numUav, numUav2)
+# env = Env(getGridGraph3x3, numUav, numUav2)
+env = Env(getGridGraph2x2, numUav, numUav2)
 
 #g,_ = getDefaultGraph5x5()
-g,_ = getGridGraphNxN(n)
+#g,_ = getGridGraph3x3()
+#g,_ = getGridGraphNxN(n)
+g,_ = getGridGraph2x2()
 
 """ initialize players """
 defender = MaddpgDef("def",g)
@@ -323,7 +343,9 @@ defender_target = MaddpgDef("def_target",g)
 uav2 = MaddpgUav2("uav2",g)
 uav2_target = MaddpgUav2("uav2_target",g)
 
-attacker = RandAtt(g)
+#attacker = RandAtt(g)
+attacker = MaddpgDef("att", g)
+attacker_target = MaddpgDef("att_target", g)
 
 """ initialize update operations """
 defender_actor_target_init, defender_actor_target_update = create_init_update('def_actor','def_target_actor')
@@ -332,17 +354,18 @@ defender_critic_target_init, defender_critic_target_update = create_init_update(
 uav2_actor_target_init, uav2_actor_target_update = create_init_update('uav2_actor','uav2_target_actor')
 uav2_critic_target_init, uav2_critic_target_update = create_init_update('uav2_critic','uav2_target_critic')
 
+attacker_actor_target_init, attacker_actor_target_update = create_init_update('att_actor', 'att_target_actor')
+attacker_critic_target_init, attacker_critic_target_update = create_init_update('att_critic', 'att_target_critic')
 
 """ initialize agent memory """
 defender_D = list()
 uav2_D = list()
+attacker_D = list()
 
 
 
 """ only support one single uav2 now """
 def run(env, defender, attacker, uav2, numEpisode, gui):
-
-
 	sess = tf.Session()
 	sess.run(tf.global_variables_initializer())
 	""" initialize the target network """
@@ -353,14 +376,15 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 	cumAttR = 0.0
 	catch = 0
 	avgDefUtilList = []
+	defWinList = []
 
 	for eps in range(0, numEpisode):
-
 		stateDict = env.resetGame()
 		attacker.reset()
 
-		if eps % 100 == 0:
+		if eps % 1 == 0:
 			print(eps)
+
 		while(env.end == False):
 
 			""" every agent make move """
@@ -387,19 +411,22 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 
 			""" pass moves to the environment """
 			""" get state after and reward from environment """
+			print("Defender action is ", defAct)
+			print("Attacker action is ", attAct)
+			print("UAV action is ", uav2Act)
 			stateDictAfter = env.step(defAct,attAct,[],[(uav2Act,1.0)])
 		
 			""" train each agent """
 			""" train defender """
+			#if (eps % 2 == 0):
 			defOldGraphTuple = utils_np.networkxs_to_graphs_tuple([_gtmp2intmp(stateDict["defState"])])
 			defNewGraphTuple = utils_np.networkxs_to_graphs_tuple([_gtmp2intmp(stateDictAfter["defState"])])
 
 			trainDefender(defender, defender_target, defender_D, 
 				defOldGraphTuple, defEdgeQ, attEdgeQ,np.array([[uav2Act,1.0]]), stateDict["defR"], defNewGraphTuple, env.end, eps,
 				sess, defender_actor_target_update, defender_critic_target_update)
-
+			#else:
 			""" train uav2 """
-
 			uav2OldState = stateDictToUav2State(stateDict)
 			uav2NewState = stateDictToUav2State(stateDictAfter)
 
@@ -412,11 +439,14 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 				oldFound, newFound)
 
 			stateDict = stateDictAfter
+			#print("Def receives reward ", stateDict["defR"])
+			#print("Attacker receives reward ", stateDict["attR"])
 
 			cumDefR += stateDict["defR"]
 			cumAttR += stateDict["attR"]
 			if stateDict["defR"] > 0:
 				catch += 1
+				defWinList.append(eps)
 
 		avgDefUtilList.append(cumDefR/(eps+1.0))
 
@@ -432,6 +462,8 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 	print ("numEpisode=%d avgDefR=%s avgAttR=%s" 
 		% (numEpisode, str(avgDefR), str(avgAttR)))
 
+	print("Defender won in the following episodes:", defWinList)
+
 
 	return 42
 
@@ -446,7 +478,7 @@ def run(env, defender, attacker, uav2, numEpisode, gui):
 
 def main():
 
-	run(env, defender, attacker, uav2, 5000, False)
+	run(env, defender, attacker, uav2, 15, False)
 
 	
 

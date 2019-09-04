@@ -79,6 +79,140 @@ def getDefaultGraph5x5():
 		g.node[i]["y"] = pos[i][1]
 	return g,pos
 
+def getGridGraph3x3():
+	# simpler graph for testing
+	g = nx.DiGraph()
+
+	for i in range(0,9):
+		if i == 5:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=50.0, d=3, ctr=0)
+		elif i in [0, 3, 7]:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=10.0, d=2, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i,i)
+
+	for i in range(0,8):
+		if i in [2,5,8]:
+			continue
+		g.add_edge(i,i+1)
+		g.add_edge(i+1,i)
+
+	for i in range(0,2):
+		for j in range(0,3):
+			g.add_edge(i*3 + j, i*3+3 + j)
+			g.add_edge(i*3+3 + j, i*3 + j)			
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	pos = dict()
+	pos[0] = np.array([0.0,2.0])
+	pos[1] = np.array([1.0,2.0])
+	pos[2] = np.array([2.0,2.0])
+	pos[3] = np.array([0.0,1.0])
+	pos[4] = np.array([1.0,1.0])
+	pos[5] = np.array([2.0,1.0])
+	pos[6] = np.array([0.0,0.0])
+	pos[7] = np.array([1.0,0.0])
+	pos[8] = np.array([2.0,0.0])
+
+	for i in range(0,9):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
+	return g,pos
+
+def getGridGraph2x2():
+	# simpler graph for testing
+	g = nx.DiGraph()
+
+	for i in range(0,4):
+		if i == 3:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=2.0, d=5, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i,i)
+
+	g.add_edge(0, 1)
+	g.add_edge(1, 0)
+	g.add_edge(0, 2)
+	g.add_edge(2, 0)
+	g.add_edge(1, 3)
+	g.add_edge(3, 1)	
+	g.add_edge(2, 3)
+	g.add_edge(3, 2)
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	pos = dict()
+	pos[0] = np.array([0.0,1.0])
+	pos[1] = np.array([1.0,1.0])
+	pos[2] = np.array([0.0,0.0])
+	pos[3] = np.array([1.0,0.0])
+
+	for i in range(0,4):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
+	return g,pos
+
+def getGridGraph2x1():
+	# simpler graph for testing
+	g = nx.DiGraph()
+
+	for i in range(0,2):
+		if i == 1:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=50.0, d=5, ctr=0)
+		#elif i in [0]:
+		#	g.add_node(i, isDef=0, isAtt=0, numUav=0, r=10.0, d=2, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i,i)
+
+	g.add_edge(0, 1)
+	g.add_edge(1, 0)
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	pos = dict()
+	pos[0] = np.array([0.0,0.0])
+	pos[1] = np.array([1.0,0.0])
+
+	for i in range(0,2):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
+	return g,pos
+
+def getGridGraph1x1():
+	# simpler graph for testing
+	g = nx.DiGraph()
+
+	for i in range(0,1):
+		if i == 0:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=2.0, d=5, ctr=0)
+		#elif i in [0]:
+		#	g.add_node(i, isDef=0, isAtt=0, numUav=0, r=10.0, d=2, ctr=0)
+		else:
+			g.add_node(i, isDef=0, isAtt=0, numUav=0, r=0.0, d=0, ctr=0)
+
+		g.add_edge(i,i)
+
+
+	g.graph["utilDefC"] = 2.0
+	g.graph["utilAttC"] = -2.0
+
+	pos = dict()
+	pos[0] = np.array([0.0,0.0])
+
+	for i in range(0,1):
+		g.node[i]["x"] = pos[i][0]
+		g.node[i]["y"] = pos[i][1]
+	return g,pos
+
 def getGridGraphNxN(n):
 	g = nx.DiGraph()
 	random.seed(10)
@@ -161,31 +295,30 @@ class Env(object):
 	def resetGame(self):
 		""" game information """
 		self.end = False
-		self.g, self.pos = self.gfn
+		self.g, self.pos = getGridGraph2x2()
+		#self.g, self.pos = self.gfn
 		self.t = 0
 		self.maxT = 100
-		# initial locations will be randomized in the future
+
 		""" def state """
 		d = random.randint(0, self.g.number_of_nodes() - 1)
-		self.g.nodes[d]
-		#self.g.nodes[12]["isDef"] = 1 #TODO: this hardcode will be changed
 		self.g.nodes[d]["isDef"] = 1
 		self.defNode = d
-		# self.defNode = 12
-		#self.defPos = self.pos[12]
 		self.defPos = self.pos[d]
+
 		""" att state """
 		# making it so that attacker can start from anywhere, but probably want to restrict to the edge in future
-	#	attNode = random.choice([0,1,2,3,4,5,10,15,20,9,14,19,24,21,22,23])
 		attNode = random.randint(0, self.g.number_of_nodes() - 1)
 		self.g.nodes[attNode]["isAtt"] = 1
 		self.attNode = attNode
 		self.attPos = self.pos[attNode]
 		self.isFound = False
+
 		""" uav state """
 		self.g.nodes[0]["numUav"] = self.numUav
 		self.uavNodes=[0 for i in range(self.numUav)]
 		self.uavPoss = [self.pos[0] for i in range(self.numUav)]
+
 		""" uav2 state """
 		uavNode = random.randint(0, self.g.number_of_nodes() - 1)
 		self.uav2Poss = [self.pos[uavNode] for i in range(self.numUav2)]
@@ -194,16 +327,12 @@ class Env(object):
 		# TODO: add in uav2 state information
 		stateDict = {"defState": self._parseStateDef(), "defR":0,
 					 "defNode": self.defNode,
-
 		             "attState": self._parseStateAtt(), "attR":0,
 		             "attNode": self.attNode,
-
 		             "end":self.end,
-
 		             "uavState":self._parseStateUav(), 
 		             "uavRs":[0 for i in range(self.numUav)],
 		             "uavNodes":self.uavNodes,
-
 		             "uav2State": self._parseStateUav2(),
 		             "uav2R":[0 for i in range(0,self.numUav2)],
 		             "uav2Poss":self.uav2Poss,
@@ -406,6 +535,7 @@ class Env(object):
 
 		""" check if def att in the same cell """
 		if self.defNode == self.attNode:
+			#print("Caught!")
 			self.end = True
 			defR = self.g.graph["utilDefC"]
 			attR = self.g.graph["utilAttC"]
@@ -424,6 +554,8 @@ class Env(object):
 			if np.linalg.norm(curUav2Pos - self.attPos) < self.uav2Range:
 				self.isFound = True
 				self.uav2Found[i] = True
+
+		#print("Counter is ", self.g.nodes[3]["ctr"])
 
 		stateDict = {"defState": self._parseStateDef(), "defR":defR,
 					 "defNode": self.defNode,
