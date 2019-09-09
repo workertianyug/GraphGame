@@ -7,4 +7,8 @@
 * Implement PPO -- Steph.
 * Extend PPO to multi-agent setting -- Steph.
 * Play around with graph embedding to see if we can make changes that yield better results.
+* Implement similar domain without using graph embedding to run standard RL algorithms -- Steph. 
 * Anything else?
+
+# TODO (in future):
+* Make current implementation more easily extensible (wrt general graphs, other algorithms, etc.)
